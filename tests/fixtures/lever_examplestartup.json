@@ -1,0 +1,29 @@
+[
+  {
+    "id": "a1b2c3d4-0001",
+    "text": "Data Analyst II",
+    "hostedUrl": "https://jobs.lever.co/examplestartup/a1b2c3d4-0001",
+    "createdAt": 1761400000000,
+    "categories": {"location": "Edmonton, Alberta", "team": "Analytics", "commitment": "Full-time"},
+    "descriptionPlain": "ExampleStartup (fictional) helps clinics schedule smarter.",
+    "lists": [
+      {"text": "Requirements", "content": "<li>3+ years of SQL and Python</li><li>Tableau or Looker</li><li>Statistics: regression analysis, hypothesis testing</li><li>Microsoft Excel</li>"},
+      {"text": "Bonus", "content": "<li>Apache Spark or Databricks</li><li>Machine learning with scikit-learn</li>"}
+    ],
+    "additionalPlain": "We work in an Agile way.",
+    "salaryRange": {"min": 38, "max": 46, "currency": "CAD", "interval": "per-hour-wage"}
+  },
+  {
+    "id": "a1b2c3d4-0002",
+    "text": "Software Developer, Backend",
+    "hostedUrl": "https://jobs.lever.co/examplestartup/a1b2c3d4-0002",
+    "createdAt": 1761000000000,
+    "categories": {"location": "Calgary, AB", "team": "Engineering", "commitment": "Full-time"},
+    "descriptionPlain": "Build our scheduling platform.",
+    "lists": [
+      {"text": "You have", "content": "<li>Python with FastAPI or Django</li><li>PostgreSQL and Redis</li><li>Docker and AWS (Lambda, S3)</li><li>C programming for our embedded devices is a plus</li>"}
+    ],
+    "additionalPlain": "Class C driver's licence required for site visits.",
+    "salaryRange": {"min": 95000, "max": 120000, "currency": "CAD", "interval": "per-year-salary"}
+  }
+]

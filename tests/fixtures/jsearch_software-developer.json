@@ -1,0 +1,22 @@
+{
+  "__note": "Synthetic sample shaped like a JSearch /search response. Companies are fictional.",
+  "status": "OK",
+  "request_id": "fixture-2",
+  "data": [
+    {
+      "job_id": "js-sd-0001",
+      "employer_name": "Foothills Software",
+      "job_title": "Software Developer",
+      "job_apply_link": "https://example.com/jobs/foothills/sd",
+      "job_description": "Build customer-facing features in TypeScript and React, backed by PostgreSQL and Node.js services on Azure.",
+      "job_city": "Edmonton",
+      "job_state": "AB",
+      "job_country": "CA",
+      "job_posted_at_datetime_utc": "2026-10-26T18:30:00.000Z",
+      "job_min_salary": 85000,
+      "job_max_salary": 105000,
+      "job_salary_period": "YEAR",
+      "job_highlights": {"Qualifications": ["Unit testing with Jest"]}
+    }
+  ]
+}

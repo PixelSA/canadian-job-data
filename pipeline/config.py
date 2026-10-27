@@ -1,0 +1,79 @@
+"""Runtime configuration, read from environment variables (or a .env file)."""
+
+import os
+from dataclasses import dataclass, field
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+@dataclass(frozen=True)
+class TrackedSearch:
+    """A role + region pair the pipeline pulls every day."""
+
+    role: str
+    region: str
+
+    @property
+    def key(self) -> str:
+        return f"{self.role.lower()}|{self.region.lower()}"
+
+
+def _parse_searches(raw: str) -> list[TrackedSearch]:
+    # Format: "data analyst@Alberta;software developer@Calgary"
+    out = []
+    for chunk in filter(None, (c.strip() for c in raw.split(";"))):
+        role, _, region = chunk.partition("@")
+        out.append(TrackedSearch(role.strip(), region.strip() or "Canada"))
+    return out
+
+
+def _list(name: str) -> list[str]:
+    return [v.strip() for v in os.getenv(name, "").split(",") if v.strip()]
+
+
+def _int(name: str, default: int) -> int:
+    return int(os.getenv(name) or default)
+
+
+@dataclass(frozen=True)
+class Settings:
+    database_url: str = os.getenv("DATABASE_URL", f"sqlite:///{ROOT / 'jobs.db'}")
+    searches: list[TrackedSearch] = field(
+        default_factory=lambda: _parse_searches(
+            os.getenv("TRACKED_SEARCHES", "data analyst@Alberta;software developer@Alberta")
+        )
+    )
+
+    # --- Quota-limited APIs. Each is enabled only when its key is set. ---
+    # JSearch: 200 requests/month on the free plan; one request per search per run.
+    jsearch_api_key: str | None = os.getenv("JSEARCH_API_KEY")
+    jsearch_provider: str = os.getenv("JSEARCH_PROVIDER", "openwebninja")  # or "rapidapi"
+    jsearch_monthly_limit: int = _int("JSEARCH_MONTHLY_LIMIT", 200)
+    jsearch_max_per_run: int = _int("JSEARCH_MAX_PER_RUN", 4)
+    jsearch_country: str = os.getenv("JSEARCH_COUNTRY", "ca")
+    jsearch_date_posted: str = os.getenv("JSEARCH_DATE_POSTED", "3days")
+    # Jooble: 500 requests for the key's lifetime.
+    jooble_api_key: str | None = os.getenv("JOOBLE_API_KEY")
+    jooble_lifetime_limit: int = _int("JOOBLE_LIFETIME_LIMIT", 500)
+    jooble_max_per_run: int = _int("JOOBLE_MAX_PER_RUN", 2)
+    # Adzuna: ~25 free calls in total.
+    adzuna_app_id: str | None = os.getenv("ADZUNA_APP_ID")
+    adzuna_app_key: str | None = os.getenv("ADZUNA_APP_KEY")
+    adzuna_country: str = os.getenv("ADZUNA_COUNTRY", "ca")
+    adzuna_lifetime_limit: int = _int("ADZUNA_LIFETIME_LIMIT", 25)
+    adzuna_max_per_run: int = _int("ADZUNA_MAX_PER_RUN", 2)
+
+    # --- Unlimited public company job boards ---
+    greenhouse_boards: list[str] = field(default_factory=lambda: _list("GREENHOUSE_BOARDS"))
+    lever_companies: list[str] = field(default_factory=lambda: _list("LEVER_COMPANIES"))
+    ashby_boards: list[str] = field(default_factory=lambda: _list("ASHBY_BOARDS"))
+    smartrecruiters_companies: list[str] = field(
+        default_factory=lambda: _list("SMARTRECRUITERS_COMPANIES"))
+
+
+settings = Settings()

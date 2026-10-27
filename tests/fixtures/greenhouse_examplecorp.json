@@ -1,0 +1,32 @@
+{
+  "__note": "Synthetic sample shaped like a Greenhouse job board response (content=true). Content is entity-escaped HTML, as Greenhouse sends it.",
+  "jobs": [
+    {
+      "id": 7001,
+      "title": "Data Analyst",
+      "company_name": "ExampleCorp",
+      "updated_at": "2026-10-25T10:00:00-06:00",
+      "absolute_url": "https://boards.greenhouse.io/examplecorp/jobs/7001",
+      "location": {"name": "Calgary, AB"},
+      "content": "&lt;p&gt;Join our analytics team.&lt;/p&gt;&lt;h3&gt;What you'll do&lt;/h3&gt;&lt;ul&gt;&lt;li&gt;Build &lt;strong&gt;Power BI&lt;/strong&gt; dashboards and DAX measures&lt;/li&gt;&lt;li&gt;Write SQL against PostgreSQL and Snowflake&lt;/li&gt;&lt;li&gt;Automate reporting with Python (pandas) and Airflow&lt;/li&gt;&lt;/ul&gt;&lt;h3&gt;Nice to have&lt;/h3&gt;&lt;ul&gt;&lt;li&gt;Experience with R, dbt, or Git&lt;/li&gt;&lt;li&gt;A/B testing&lt;/li&gt;&lt;/ul&gt;"
+    },
+    {
+      "id": 7002,
+      "title": "Senior Software Developer",
+      "company_name": "ExampleCorp",
+      "updated_at": "2026-10-20T10:00:00-06:00",
+      "absolute_url": "https://boards.greenhouse.io/examplecorp/jobs/7002",
+      "location": {"name": "Edmonton, Alberta, Canada"},
+      "content": "&lt;p&gt;We build services in TypeScript and Go on AWS.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;React and Next.js front end&lt;/li&gt;&lt;li&gt;Docker, Kubernetes, Terraform&lt;/li&gt;&lt;li&gt;CI/CD with GitHub Actions&lt;/li&gt;&lt;li&gt;REST APIs and GraphQL&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;Ready to go the extra mile? Apply!&lt;/p&gt;"
+    },
+    {
+      "id": 7003,
+      "title": "Marketing Coordinator",
+      "company_name": "ExampleCorp",
+      "updated_at": "2026-10-22T10:00:00-04:00",
+      "absolute_url": "https://boards.greenhouse.io/examplecorp/jobs/7003",
+      "location": {"name": "Toronto, ON"},
+      "content": "&lt;p&gt;Coordinate campaigns. Comfortable with Google Analytics and Salesforce. Spark conversations with customers.&lt;/p&gt;"
+    }
+  ]
+}

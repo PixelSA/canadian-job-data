@@ -1,0 +1,17 @@
+{
+  "__note": "Synthetic sample shaped like a SmartRecruiters posting detail. Company is fictional.",
+  "id": "744000001",
+  "name": "Data Analyst, Merchandising",
+  "releasedDate": "2026-10-23T14:00:00.000Z",
+  "postingUrl": "https://jobs.smartrecruiters.com/ExampleRetail/744000001",
+  "location": {"city": "Edmonton", "region": "AB", "country": "ca"},
+  "company": {"identifier": "ExampleRetail", "name": "ExampleRetail"},
+  "jobAd": {
+    "sections": {
+      "companyDescription": {"title": "Company Description", "text": "<p>ExampleRetail runs 40 stores across the Prairies.</p>"},
+      "jobDescription": {"title": "Job Description", "text": "<ul><li>Analyze sales with SQL and Python</li><li>Build Power BI reports</li></ul>"},
+      "qualifications": {"title": "Qualifications", "text": "<p>Advanced Excel; experience with SAP is an asset.</p>"},
+      "additionalInformation": {"title": "Additional Information", "text": "<p>Hybrid, 3 days in office.</p>"}
+    }
+  }
+}

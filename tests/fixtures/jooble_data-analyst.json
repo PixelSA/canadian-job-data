@@ -1,0 +1,18 @@
+{
+  "__note": "Synthetic sample shaped like a Jooble API response. Companies are fictional.",
+  "totalCount": 1,
+  "jobs": [
+    {
+      "id": 5550001,
+      "title": "Data Analyst",
+      "location": "Red Deer, AB",
+      "snippet": "&nbsp;...reporting with <b>SQL</b> and Excel, maintain Tableau dashboards...&nbsp;",
+      "salary": "$60,000 - $70,000 a year",
+      "source": "example-board.ca",
+      "type": "Full-time",
+      "link": "https://jooble.org/desc/5550001",
+      "company": "Central Alberta Co-op",
+      "updated": "2026-10-26T00:00:00.0000000"
+    }
+  ]
+}

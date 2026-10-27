@@ -1,0 +1,58 @@
+{
+  "__note": "Synthetic sample shaped like an Adzuna /search response. Companies are fictional.",
+  "count": 4,
+  "results": [
+    {
+      "id": "4100000001",
+      "title": "Data Analyst",
+      "description": "ExampleCorp is hiring a Data Analyst in Calgary. You will build Power BI dashboards and write SQL against our PostgreSQL warehouse. Python experience is an asset...",
+      "created": "2026-10-25T14:02:11Z",
+      "redirect_url": "https://www.adzuna.ca/details/4100000001",
+      "company": {"display_name": "ExampleCorp Inc."},
+      "location": {"display_name": "Calgary, Alberta", "area": ["Canada", "Alberta", "Calgary"]},
+      "salary_min": 68000,
+      "salary_max": 82000,
+      "salary_is_predicted": "0",
+      "category": {"label": "IT Jobs"}
+    },
+    {
+      "id": "4100000002",
+      "title": "Junior Data Analyst",
+      "description": "Prairie Energy Ltd. seeks a junior analyst. Advanced Excel (pivot tables, VLOOKUP) and Tableau required. Excel in a fast-paced environment. Exposure to R or Python...",
+      "created": "2026-10-26T09:30:00Z",
+      "redirect_url": "https://www.adzuna.ca/details/4100000002",
+      "company": {"display_name": "Prairie Energy Ltd."},
+      "location": {"display_name": "Edmonton, Alberta", "area": ["Canada", "Alberta", "Edmonton"]},
+      "salary_min": 55000,
+      "salary_max": 62000,
+      "salary_is_predicted": "0",
+      "category": {"label": "Energy, Oil & Gas Jobs"}
+    },
+    {
+      "id": "4100000003",
+      "title": "Business Data Analyst",
+      "description": "Chinook Health Analytics: translate business questions into SQL Server queries and SSRS reports. Agile team. Go above and beyond for our clients...",
+      "created": "2026-10-24T16:45:00Z",
+      "redirect_url": "https://www.adzuna.ca/details/4100000003",
+      "company": {"display_name": "Chinook Health Analytics"},
+      "location": {"display_name": "Calgary, Alberta", "area": ["Canada", "Alberta", "Calgary"]},
+      "salary_min": 74512.33,
+      "salary_max": 74512.33,
+      "salary_is_predicted": "1",
+      "category": {"label": "IT Jobs"}
+    },
+    {
+      "id": "4100000004",
+      "title": "Data Analyst, Supply Chain",
+      "description": "Lethbridge Foods is looking for an analyst to own demand forecasting in Snowflake and dbt, with Looker reporting. Statistics background preferred...",
+      "created": "2026-10-26T11:15:00Z",
+      "redirect_url": "https://www.adzuna.ca/details/4100000004",
+      "company": {"display_name": "Lethbridge Foods"},
+      "location": {"display_name": "Lethbridge, Alberta", "area": ["Canada", "Alberta", "Lethbridge"]},
+      "salary_min": 70000,
+      "salary_max": 90000,
+      "salary_is_predicted": "0",
+      "category": {"label": "Logistics & Warehouse Jobs"}
+    }
+  ]
+}

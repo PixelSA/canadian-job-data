@@ -1,0 +1,12 @@
+{
+  "__note": "Synthetic sample shaped like a SmartRecruiters postings list. Company is fictional.",
+  "offset": 0,
+  "limit": 100,
+  "totalFound": 2,
+  "content": [
+    {"id": "744000001", "name": "Data Analyst, Merchandising", "releasedDate": "2026-10-23T14:00:00.000Z",
+     "location": {"city": "Edmonton", "region": "AB", "country": "ca"}, "company": {"name": "ExampleRetail"}},
+    {"id": "744000002", "name": "Store Manager", "releasedDate": "2026-10-22T14:00:00.000Z",
+     "location": {"city": "Edmonton", "region": "AB", "country": "ca"}, "company": {"name": "ExampleRetail"}}
+  ]
+}

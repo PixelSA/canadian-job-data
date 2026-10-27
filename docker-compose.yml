@@ -1,0 +1,15 @@
+# Local Postgres (+ Redis for the API cache later). SQLite works fine until you need these.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: jobs
+      POSTGRES_PASSWORD: jobs
+      POSTGRES_DB: jobs
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+volumes:
+  pgdata:

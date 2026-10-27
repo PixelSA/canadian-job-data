@@ -1,0 +1,54 @@
+name: ingestion
+on:
+  schedule:
+    - cron: "17 11 * * *"  # daily, 11:17 UTC (early morning in Alberta); off the hour to dodge load
+    - cron: "40 12 8 * *"  # monthly Job Bank file, on the 8th (new month is usually out by then)
+  workflow_dispatch:
+    inputs:
+      job:
+        type: choice
+        options: [daily, jobbank]
+        default: daily
+
+concurrency: ingest  # never run two at once (also protects the request budgets)
+
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}  # hosted Postgres (Neon, Supabase, Railway...)
+  TRACKED_SEARCHES: ${{ vars.TRACKED_SEARCHES }}
+
+jobs:
+  daily:
+    if: github.event.schedule == '17 11 * * *' || inputs.job == 'daily'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[postgres]"
+      - run: python -m pipeline.run
+        env:
+          JSEARCH_API_KEY: ${{ secrets.JSEARCH_API_KEY }}
+          JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}    # leave unset to keep Jooble off
+          ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}      # leave unset to keep Adzuna off
+          ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
+          GREENHOUSE_BOARDS: ${{ vars.GREENHOUSE_BOARDS }}
+          LEVER_COMPANIES: ${{ vars.LEVER_COMPANIES }}
+          ASHBY_BOARDS: ${{ vars.ASHBY_BOARDS }}
+          SMARTRECRUITERS_COMPANIES: ${{ vars.SMARTRECRUITERS_COMPANIES }}
+      - run: python -m pipeline.run --budgets
+
+  jobbank:
+    if: github.event.schedule == '40 12 8 * *' || inputs.job == 'jobbank'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[postgres]"
+      - run: python -m pipeline.jobbank --latest 2  # also retries last month if it failed

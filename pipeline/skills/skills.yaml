@@ -1,0 +1,184 @@
+# Skill taxonomy. Editing this file changes the extractor version, which makes the
+# pipeline re-extract every stored posting on its next run.
+#
+# Fields:
+#   name       canonical name shown in the app
+#   category   language | data | bi | ml | database | cloud | devops | web | tool | method
+#   aliases    extra spellings, matched case-insensitively
+#   implies    other skills to also credit (e.g. PostgreSQL -> SQL)
+#   ambiguous  true for names that are also English words/letters (R, Go, Excel...).
+#              These match only with exact capitalization AND context: a cue word next to
+#              them, or another known skill within a few tokens.
+#   cues       neighbouring words that confirm an ambiguous match ("R programming")
+#   reject_prev / reject_next   neighbouring words that veto an ambiguous match
+
+# ---- languages ----
+- {name: Python, category: language}
+- {name: SQL, category: language}
+- {name: Java, category: language}
+- {name: JavaScript, category: language, aliases: [js, ecmascript]}
+- {name: TypeScript, category: language, aliases: [ts]}
+- {name: C#, category: language, aliases: [c sharp, csharp]}
+- {name: C++, category: language, aliases: [cpp]}
+- name: C
+  category: language
+  ambiguous: true
+  cues: [programming, language, embedded]
+  reject_prev: [class, level, grade, plan, type, schedule, section, vitamin, part, appendix]
+  reject_next: ["-", "&", level, suite, corp, class, "."]
+- name: R
+  category: language
+  aliases: [rstudio, r programming, tidyverse]
+  ambiguous: true
+  cues: [programming, language, studio, shiny]
+  reject_prev: [r, "&"]
+  reject_next: ["&", "-", "."]
+- name: Go
+  category: language
+  aliases: [golang]
+  ambiguous: true
+  cues: [programming, language, lang]
+  reject_prev: [to, will, "let's", on, the, a, "'s"]
+  reject_next: ["-", above, beyond, to, the, getter, live, ahead, through, for, back, into, out]
+- {name: Rust, category: language}
+- {name: Kotlin, category: language}
+- name: Swift
+  category: language
+  ambiguous: true
+  cues: [ios, swiftui, programming, language, xcode]
+  reject_next: [response, action, pace, resolution]
+- {name: PHP, category: language}
+- {name: Ruby, category: language}
+- {name: Scala, category: language}
+- {name: Bash, category: language, aliases: [shell scripting, bash scripting]}
+- {name: PowerShell, category: language}
+- {name: VBA, category: language}
+- {name: SAS, category: language}
+- {name: MATLAB, category: language}
+- {name: HTML, category: language, aliases: [html5]}
+- {name: CSS, category: language, aliases: [css3]}
+
+# ---- databases ----
+- {name: PostgreSQL, category: database, aliases: [postgres, psql], implies: [SQL]}
+- {name: MySQL, category: database, implies: [SQL]}
+- {name: SQL Server, category: database, aliases: [mssql, ms sql, microsoft sql server, t-sql, tsql], implies: [SQL]}
+- {name: Oracle Database, category: database, aliases: [oracle db, pl/sql, plsql], implies: [SQL]}
+- {name: SQLite, category: database}
+- {name: MongoDB, category: database, aliases: [mongo]}
+- {name: Redis, category: database}
+- {name: Elasticsearch, category: database, aliases: [elastic search, opensearch]}
+- {name: Cassandra, category: database}
+- {name: DynamoDB, category: database}
+- {name: NoSQL, category: database}
+
+# ---- data engineering / warehousing ----
+- {name: Snowflake, category: data}
+- {name: BigQuery, category: data, aliases: [big query]}
+- {name: Redshift, category: data, aliases: [amazon redshift]}
+- {name: Databricks, category: data}
+- name: Spark
+  category: data
+  aliases: [apache spark, pyspark, spark sql]
+  ambiguous: true
+  cues: [apache, streaming, cluster, jobs]
+  reject_next: [innovation, change, curiosity, conversations, ideas, creativity, joy]
+- {name: Hadoop, category: data}
+- {name: Kafka, category: data, aliases: [apache kafka]}
+- {name: Airflow, category: data, aliases: [apache airflow]}
+- {name: dbt, category: data, aliases: [data build tool]}
+- {name: ETL, category: data, aliases: [elt, etl pipelines, data pipelines]}
+- {name: Data Warehousing, category: data, aliases: [data warehouse, data warehouses, data warehousing]}
+- {name: Data Modeling, category: data, aliases: [data modelling, dimensional modeling, star schema]}
+- {name: Azure Data Factory, category: data, aliases: [adf]}
+- {name: SSIS, category: data}
+- {name: Informatica, category: data}
+- {name: Fivetran, category: data}
+
+# ---- analysis / BI ----
+- name: Excel
+  category: bi
+  aliases: [microsoft excel, ms excel, pivot tables, pivot table, vlookup, xlookup]
+  ambiguous: true
+  cues: [microsoft, ms, advanced, spreadsheets, spreadsheet, skills, proficiency, proficient, intermediate]
+  reject_next: [in, at, as, within]
+  reject_prev: [to, will, you, "'ll"]
+- {name: Power BI, category: bi, aliases: [powerbi, power bi desktop]}
+- {name: DAX, category: bi}
+- {name: Power Query, category: bi}
+- {name: Tableau, category: bi}
+- {name: Looker, category: bi, aliases: [looker studio, google data studio]}
+- {name: Qlik, category: bi, aliases: [qlikview, qlik sense]}
+- {name: SSRS, category: bi}
+- {name: Google Analytics, category: bi, aliases: [ga4]}
+- {name: Statistics, category: method, aliases: [statistical analysis, statistical modeling, statistical modelling, hypothesis testing, regression analysis]}
+- {name: A/B Testing, category: method, aliases: [ab testing, a/b tests, experimentation]}
+- {name: Data Visualization, category: method, aliases: [data visualisation, dashboards, dashboarding]}
+- {name: pandas, category: data}
+- {name: NumPy, category: data}
+- {name: Jupyter, category: tool, aliases: [jupyter notebooks, jupyterlab]}
+
+# ---- ML / AI ----
+- {name: Machine Learning, category: ml, aliases: [ml, machine-learning]}
+- {name: Deep Learning, category: ml}
+- {name: scikit-learn, category: ml, aliases: [sklearn, scikit learn]}
+- {name: TensorFlow, category: ml}
+- {name: PyTorch, category: ml}
+- {name: NLP, category: ml, aliases: [natural language processing]}
+- {name: Computer Vision, category: ml}
+- {name: LLMs, category: ml, aliases: [llm, large language models, generative ai, genai]}
+- {name: MLOps, category: ml}
+
+# ---- cloud ----
+- {name: AWS, category: cloud, aliases: [amazon web services]}
+- {name: Azure, category: cloud, aliases: [microsoft azure]}
+- {name: GCP, category: cloud, aliases: [google cloud, google cloud platform]}
+- {name: AWS Lambda, category: cloud, aliases: [lambda functions], implies: [AWS]}
+- {name: S3, category: cloud, aliases: [amazon s3], implies: [AWS]}
+- {name: EC2, category: cloud, implies: [AWS]}
+
+# ---- devops / infra ----
+- {name: Docker, category: devops, aliases: [containers, containerization]}
+- {name: Kubernetes, category: devops, aliases: [k8s, eks, aks, gke]}
+- {name: Terraform, category: devops}
+- {name: Ansible, category: devops}
+- {name: CI/CD, category: devops, aliases: [ci cd, continuous integration, continuous delivery, continuous deployment]}
+- {name: GitHub Actions, category: devops}
+- {name: Jenkins, category: devops}
+- {name: GitLab CI, category: devops}
+- {name: Linux, category: devops, aliases: [unix]}
+- {name: Git, category: tool, aliases: [github, gitlab, bitbucket, version control]}
+- {name: Prometheus, category: devops}
+- {name: Grafana, category: devops}
+- {name: Datadog, category: devops}
+
+# ---- web / backend ----
+- {name: React, category: web, aliases: [react.js, reactjs]}
+- {name: Next.js, category: web, aliases: [nextjs]}
+- {name: Angular, category: web, aliases: [angularjs]}
+- {name: Vue, category: web, aliases: [vue.js, vuejs]}
+- {name: Node.js, category: web, aliases: [nodejs, node js], implies: [JavaScript]}
+- {name: Express, category: web, aliases: [express.js, expressjs]}
+- {name: Django, category: web, implies: [Python]}
+- {name: Flask, category: web, implies: [Python]}
+- {name: FastAPI, category: web, implies: [Python]}
+- {name: Spring Boot, category: web, aliases: [spring framework], implies: [Java]}
+- {name: .NET, category: web, aliases: [dotnet, asp.net, .net core]}
+- {name: Ruby on Rails, category: web, aliases: [rails], implies: [Ruby]}
+- {name: REST APIs, category: web, aliases: [rest, restful, rest api, restful apis]}
+- {name: GraphQL, category: web}
+- {name: Microservices, category: web, aliases: [microservice]}
+- {name: Tailwind CSS, category: web, aliases: [tailwind]}
+
+# ---- mobile ----
+- {name: iOS, category: mobile, aliases: [swiftui]}
+- {name: Android, category: mobile}
+- {name: React Native, category: mobile, implies: [React]}
+- {name: Flutter, category: mobile}
+
+# ---- tools / methods ----
+- {name: Jira, category: tool}
+- {name: Confluence, category: tool}
+- {name: Salesforce, category: tool}
+- {name: SAP, category: tool}
+- {name: Agile, category: method, aliases: [scrum, kanban]}
+- {name: Unit Testing, category: method, aliases: [unit tests, pytest, jest, junit, tdd, test-driven development]}

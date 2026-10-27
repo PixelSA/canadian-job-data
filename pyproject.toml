@@ -1,0 +1,25 @@
+[project]
+name = "job-market-pipeline"
+version = "0.1.0"
+description = "Daily ingestion + skill extraction for the job market intelligence app"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "sqlalchemy>=2.0",
+    "spacy>=3.8",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.2"]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+include = ["pipeline*"]
+
+[tool.setuptools.package-data]
+pipeline = ["skills/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
