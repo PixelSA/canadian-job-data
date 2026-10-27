@@ -12,6 +12,9 @@ on:
 
 concurrency: ingest  # never run two at once (also protects the request budgets)
 
+# Secrets/variables that were never created arrive as empty strings, which the pipeline
+# treats as "not set". Create them under Settings > Secrets and variables > Actions,
+# as *Repository* secrets/variables (not Environment, Codespaces or Dependabot ones).
 env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}  # hosted Postgres (Neon, Supabase, Railway...)
   TRACKED_SEARCHES: ${{ vars.TRACKED_SEARCHES }}
@@ -21,23 +24,39 @@ jobs:
     if: github.event.schedule == '17 11 * * *' || inputs.job == 'daily'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      JSEARCH_API_KEY: ${{ secrets.JSEARCH_API_KEY }}
+      JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}    # leave unset to keep Jooble off
+      ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}      # leave unset to keep Adzuna off
+      ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
+      GREENHOUSE_BOARDS: ${{ vars.GREENHOUSE_BOARDS }}
+      LEVER_COMPANIES: ${{ vars.LEVER_COMPANIES }}
+      ASHBY_BOARDS: ${{ vars.ASHBY_BOARDS }}
+      SMARTRECRUITERS_COMPANIES: ${{ vars.SMARTRECRUITERS_COMPANIES }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check settings
+        run: |
+          # Without a database the run would write to a throwaway SQLite file and "succeed".
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error title=Missing secret::Repository secret DATABASE_URL is not set (Settings > Secrets and variables > Actions > Secrets)."
+            exit 1
+          fi
+          case "$DATABASE_URL" in
+            postgresql+psycopg://*) ;;
+            *) echo "::error title=Bad DATABASE_URL::DATABASE_URL must start with postgresql+psycopg://"; exit 1 ;;
+          esac
+          [ -n "$JSEARCH_API_KEY" ] || echo "::warning title=JSearch off::Secret JSEARCH_API_KEY is not set; only company job boards will run."
+          [ -n "$TRACKED_SEARCHES" ] || echo "::warning title=Default searches::Variable TRACKED_SEARCHES is not set; using the defaults."
+          if [ -z "$GREENHOUSE_BOARDS$LEVER_COMPANIES$ASHBY_BOARDS$SMARTRECRUITERS_COMPANIES" ]; then
+            echo "::warning title=No company boards::None of GREENHOUSE_BOARDS, LEVER_COMPANIES, ASHBY_BOARDS, SMARTRECRUITERS_COMPANIES is set."
+          fi
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
       - run: pip install -e ".[postgres]"
       - run: python -m pipeline.run
-        env:
-          JSEARCH_API_KEY: ${{ secrets.JSEARCH_API_KEY }}
-          JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}    # leave unset to keep Jooble off
-          ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}      # leave unset to keep Adzuna off
-          ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
-          GREENHOUSE_BOARDS: ${{ vars.GREENHOUSE_BOARDS }}
-          LEVER_COMPANIES: ${{ vars.LEVER_COMPANIES }}
-          ASHBY_BOARDS: ${{ vars.ASHBY_BOARDS }}
-          SMARTRECRUITERS_COMPANIES: ${{ vars.SMARTRECRUITERS_COMPANIES }}
       - run: python -m pipeline.run --budgets
 
   jobbank:
@@ -45,8 +64,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check settings
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error title=Missing secret::Repository secret DATABASE_URL is not set (Settings > Secrets and variables > Actions > Secrets)."
+            exit 1
+          fi
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip

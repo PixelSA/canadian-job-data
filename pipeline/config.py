@@ -32,39 +32,47 @@ def _parse_searches(raw: str) -> list[TrackedSearch]:
     return out
 
 
+def _env(name: str, default: str | None = None) -> str | None:
+    """Read a setting, treating blank as unset. GitHub Actions passes an empty string for a
+    secret or variable that was never created, and that must not override the default."""
+    value = (os.getenv(name) or "").strip()
+    return value or default
+
+
 def _list(name: str) -> list[str]:
-    return [v.strip() for v in os.getenv(name, "").split(",") if v.strip()]
+    return [v.strip() for v in (_env(name) or "").split(",") if v.strip()]
 
 
 def _int(name: str, default: int) -> int:
-    return int(os.getenv(name) or default)
+    return int(_env(name) or default)
 
 
 @dataclass(frozen=True)
 class Settings:
-    database_url: str = os.getenv("DATABASE_URL", f"sqlite:///{ROOT / 'jobs.db'}")
+    database_url: str = _env("DATABASE_URL", f"sqlite:///{ROOT / 'jobs.db'}")
     searches: list[TrackedSearch] = field(
         default_factory=lambda: _parse_searches(
-            os.getenv("TRACKED_SEARCHES", "data analyst@Alberta;software developer@Alberta")
+            _env("TRACKED_SEARCHES",
+                 "data analyst@Alberta;software developer@Alberta;software engineer@Alberta")
         )
     )
 
     # --- Quota-limited APIs. Each is enabled only when its key is set. ---
     # JSearch: 200 requests/month on the free plan; one request per search per run.
-    jsearch_api_key: str | None = os.getenv("JSEARCH_API_KEY")
-    jsearch_provider: str = os.getenv("JSEARCH_PROVIDER", "openwebninja")  # or "rapidapi"
+    jsearch_api_key: str | None = _env("JSEARCH_API_KEY")
+    jsearch_provider: str = _env("JSEARCH_PROVIDER", "openwebninja")  # or "rapidapi"
     jsearch_monthly_limit: int = _int("JSEARCH_MONTHLY_LIMIT", 200)
     jsearch_max_per_run: int = _int("JSEARCH_MAX_PER_RUN", 4)
-    jsearch_country: str = os.getenv("JSEARCH_COUNTRY", "ca")
-    jsearch_date_posted: str = os.getenv("JSEARCH_DATE_POSTED", "3days")
+    jsearch_country: str = _env("JSEARCH_COUNTRY", "ca")
+    jsearch_date_posted: str = _env("JSEARCH_DATE_POSTED", "3days")
     # Jooble: 500 requests for the key's lifetime.
-    jooble_api_key: str | None = os.getenv("JOOBLE_API_KEY")
+    jooble_api_key: str | None = _env("JOOBLE_API_KEY")
     jooble_lifetime_limit: int = _int("JOOBLE_LIFETIME_LIMIT", 500)
     jooble_max_per_run: int = _int("JOOBLE_MAX_PER_RUN", 2)
     # Adzuna: ~25 free calls in total.
-    adzuna_app_id: str | None = os.getenv("ADZUNA_APP_ID")
-    adzuna_app_key: str | None = os.getenv("ADZUNA_APP_KEY")
-    adzuna_country: str = os.getenv("ADZUNA_COUNTRY", "ca")
+    adzuna_app_id: str | None = _env("ADZUNA_APP_ID")
+    adzuna_app_key: str | None = _env("ADZUNA_APP_KEY")
+    adzuna_country: str = _env("ADZUNA_COUNTRY", "ca")
     adzuna_lifetime_limit: int = _int("ADZUNA_LIFETIME_LIMIT", 25)
     adzuna_max_per_run: int = _int("ADZUNA_MAX_PER_RUN", 2)
 
