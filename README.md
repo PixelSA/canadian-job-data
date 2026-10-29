@@ -11,6 +11,7 @@ All sources are free. The ones with quotas run under a request budget stored in 
 |---|---|---|---|
 | **JSearch** | Daily market-wide postings (Google for Jobs: LinkedIn, Indeed, Glassdoor...) | 200 req/month, guarded | Yes |
 | **Greenhouse, Lever, Ashby, SmartRecruiters** | Daily postings from tracked employers | Unlimited, no key | Yes |
+| **Jobven** | Daily postings scraped from employers' own career pages (incl. Workday) | 300 *records*/month, guarded | Yes |
 | **Job Bank open data** | Monthly history back to 2023: volume, vacancies, salaries, NOC codes | Unlimited, monthly CSV | No (title only) |
 | Jooble, Adzuna | Optional, off unless a key is set | 500 lifetime / ~25 total | Snippets |
 
@@ -28,7 +29,7 @@ All sources are free. The ones with quotas run under a request budget stored in 
 | Step | Module | Notes |
 |---|---|---|
 | Fetch | `pipeline/sources/` | Official APIs only; retry with backoff on 429/5xx. |
-| Request budgets | `pipeline/budget.py` | Each call to JSearch/Jooble/Adzuna is counted in `api_usage` **before** it is sent, in its own transaction, so the count survives crashes. Monthly or lifetime limits, plus a per-run cap. When the budget runs out the source stops cleanly, the run keeps what it fetched and records a note. Retries count too, because they do against the real quota. |
+| Request budgets | `pipeline/budget.py` | Each call to JSearch/Jooble/Adzuna is counted in `api_usage` **before** it is sent, in its own transaction, so the count survives crashes. Monthly or lifetime limits, plus a per-run cap. When the budget runs out the source stops cleanly, the run keeps what it fetched and records a note. Retries count too, because they do against the real quota. Jobven bills per job record instead: a page's size is reserved before the call and the unused part refunded. |
 | Store raw | `ingest.store_raw` | Untouched payloads, so improvements can reprocess history without re-calling APIs. (Job Bank rows skip this; the monthly file is already an immutable, re-downloadable raw layer.) |
 | Upsert + dedupe | `ingest.upsert_posting` | `(source, source_id)` is unique; a title/company/city **fingerprint** links the same job across sources (JSearch often repeats one job with several apply links). |
 | Extract skills | `pipeline/skills/` | ~135-skill YAML taxonomy + spaCy `PhraseMatcher`. Ambiguous names (R, Go, C, Excel, Spark, Swift) need exact case **and** context. |
@@ -69,6 +70,7 @@ against hosted Postgres (`pip install -e ".[postgres]"`).
 
 ## Known limitations
 
+- Jobven syncs incrementally (oldest-listed first, from the newest listing already stored), capped at `JOBVEN_MAX_PER_RUN` records a day. If Alberta listings for the tracked roles outpace ~10/day, it falls behind rather than skipping jobs. Its own AI-extracted skills are kept in `raw_postings` but not used: stats come from one extractor so every source is measured the same way. Only CAD salaries are used. Its terms forbid redistributing the raw data; check them before listing individual postings publicly.
 - Daily skill counts come from JSearch (whole market, capped at ~10 newest postings per search per day on the free plan) and tracked employers' job boards, which skew toward companies on those platforms.
 - Job Bank has no employer names or descriptions, so it contributes demand and salary history, not skills.
 - **Job Bank series break, July 2025:** tracked-role postings fall about 80%. The file format didn't change; rows from Job Bank's *partner job boards* dropped (Alberta: 6,493 to 3,617 between June and July 2025) while direct employer postings held steady (3,685 to 3,648). Charts should mark this break rather than present it as a collapse in demand.

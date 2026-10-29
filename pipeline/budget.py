@@ -1,8 +1,12 @@
-"""Request budgets for quota-limited APIs (JSearch, Jooble, Adzuna).
+"""Request budgets for quota-limited APIs (JSearch, Jooble, Adzuna, Jobven).
 
 Every call is counted in the api_usage table *before* it is made, in its own transaction,
 so the count survives crashes and rolled-back ingestion. Once the period's limit (or the
 per-run cap) is reached, spend() raises BudgetExhausted and the source stops cleanly.
+
+Most APIs bill per request. Jobven bills per job record returned, so its budget counts
+records: a page's size is reserved before the call and the unused part refunded after.
+(The api_usage column is still named `calls`; it holds whatever unit the budget counts.)
 """
 
 import logging
@@ -34,6 +38,7 @@ class RequestBudget:
         period: str = "month",  # "month" resets on the 1st (UTC); "lifetime" never resets
         max_per_run: int | None = None,
         clock: Callable[[], datetime] = _utcnow,
+        unit: str = "calls",  # what one unit of the limit is, for display ("records" for Jobven)
     ):
         if period not in {"month", "lifetime"}:
             raise ValueError(f"unknown budget period {period!r}")
@@ -43,6 +48,7 @@ class RequestBudget:
         self.period = period
         self.max_per_run = max_per_run
         self.clock = clock
+        self.unit = unit
         self.spent_this_run = 0
 
     @property
@@ -64,26 +70,42 @@ class RequestBudget:
     def start_run(self) -> None:
         self.spent_this_run = 0
 
-    def spend(self) -> None:
-        """Reserve one call, or raise BudgetExhausted."""
-        if self.max_per_run is not None and self.spent_this_run >= self.max_per_run:
+    def _usage_row(self, s, key: str) -> ApiUsage | None:
+        return s.scalar(
+            select(ApiUsage)
+            .where(ApiUsage.source == self.source, ApiUsage.period == key)
+            .with_for_update()  # row lock on Postgres; no-op on SQLite
+        )
+
+    def spend(self, n: int = 1) -> None:
+        """Reserve n units (one call, or a page of records), or raise BudgetExhausted."""
+        if self.max_per_run is not None and self.spent_this_run + n > self.max_per_run:
             raise BudgetExhausted(f"{self.source}: per-run cap of {self.max_per_run} reached")
         key = self.period_key
         with self.session_factory() as s:
-            row = s.scalar(
-                select(ApiUsage)
-                .where(ApiUsage.source == self.source, ApiUsage.period == key)
-                .with_for_update()  # row lock on Postgres; no-op on SQLite
-            )
+            row = self._usage_row(s, key)
             if row is None:
                 row = ApiUsage(source=self.source, period=key, calls=0)
                 s.add(row)
-            if row.calls >= self.limit:
+            if row.calls + n > self.limit:
                 raise BudgetExhausted(
                     f"{self.source}: {self.period} limit of {self.limit} reached ({key})")
-            row.calls += 1
+            row.calls += n
             s.commit()
             used = row.calls
-        self.spent_this_run += 1
+        self.spent_this_run += n
         if used >= self.limit * 0.8:
-            log.warning("%s has used %d of %d calls for %s", self.source, used, self.limit, key)
+            log.warning("%s has used %d of %d %s for %s",
+                        self.source, used, self.limit, self.unit, key)
+
+    def refund(self, n: int) -> None:
+        """Give back reserved units that weren't used (a short page, or a failed request
+        the API doesn't bill)."""
+        if n <= 0:
+            return
+        with self.session_factory() as s:
+            row = self._usage_row(s, self.period_key)
+            if row is not None:
+                row.calls = max(row.calls - n, 0)
+                s.commit()
+        self.spent_this_run = max(self.spent_this_run - n, 0)
