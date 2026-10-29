@@ -64,7 +64,10 @@ def load_taxonomy(path: Path = TAXONOMY_PATH) -> dict[str, Skill]:
 class SkillExtractor:
     def __init__(self, taxonomy_path: Path = TAXONOMY_PATH):
         self.skills = load_taxonomy(taxonomy_path)
-        taxonomy_hash = hashlib.sha256(taxonomy_path.read_bytes()).hexdigest()[:8]
+        # Hash with normalized line endings: a Windows checkout (CRLF) and CI (LF) of the
+        # same taxonomy must get the same version, or each run re-extracts every posting.
+        content = taxonomy_path.read_bytes().replace(b"\r\n", b"\n")
+        taxonomy_hash = hashlib.sha256(content).hexdigest()[:8]
         self.version = f"v{LOGIC_VERSION}-{taxonomy_hash}"
 
         # Tokenizer only; no model download needed.

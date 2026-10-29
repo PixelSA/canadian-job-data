@@ -75,3 +75,13 @@ def test_version_changes_when_taxonomy_changes(tmp_path):
     copy.write_text(copy.read_text(encoding="utf-8") + "\n- {name: Zig, category: language}\n",
                     encoding="utf-8")
     assert SkillExtractor(copy).version != v1
+
+
+def test_version_ignores_line_endings(tmp_path):
+    from pipeline.skills.extractor import TAXONOMY_PATH, SkillExtractor
+
+    lf = TAXONOMY_PATH.read_bytes().replace(b"\r\n", b"\n")
+    (tmp_path / "lf.yaml").write_bytes(lf)
+    (tmp_path / "crlf.yaml").write_bytes(lf.replace(b"\n", b"\r\n"))
+    assert SkillExtractor(tmp_path / "lf.yaml").version == \
+        SkillExtractor(tmp_path / "crlf.yaml").version
