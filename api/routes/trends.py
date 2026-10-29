@@ -4,8 +4,8 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from api.db import get_session
-from api.schemas import SearchOut, SkillTrendsOut, SkillOut
-from pipeline.db import PostingSearch, DailySkillStat
+from api.schemas import SearchOut, SkillTrendsOut, SkillOut, SalaryPointOut, SalaryTrendsOut
+from pipeline.db import PostingSearch, DailySkillStat, DailySalaryStat
 
 from datetime import date, timedelta
 
@@ -58,3 +58,16 @@ def top_skills(key: SearchKey, session = Depends(get_session), limit: int = Quer
         ))
     
     return SkillTrendsOut(search=SearchOut.from_key(key), day=latest_day, skills=skills)
+
+
+@router.get("/trends/salaries", response_model=SalaryTrendsOut)
+def salary_trends(key: SearchKey, days: int = Query(30, ge = 1, le=365), session = Depends(get_session)):
+    since = date.today() - timedelta(days=days)
+    rows = session.scalars(
+        select(DailySalaryStat)
+        .where(DailySalaryStat.search_key == key, DailySalaryStat.day >= since)
+        .order_by(DailySalaryStat.day.asc())).all()
+
+    points = [SalaryPointOut(day = row.day, sample_size = row.sample_size, p25 = row.p25, median = row.median, p75=row.p75) for row in rows]
+
+    return SalaryTrendsOut(search=SearchOut.from_key(key), points=points)

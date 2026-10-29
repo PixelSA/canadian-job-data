@@ -23,3 +23,17 @@ class SkillTrendsOut(BaseModel):
     search: SearchOut # The search (role and region that form key)
     day: date # Current day for these numbers
     skills: list[SkillOut] # Nested list of skill info, ordered most-mentioned first
+
+
+class SalaryPointOut(BaseModel):
+    day: date
+    sample_size: int = Field("Number of postings for this job")
+    p25: float | None = Field(default = None, description="Bottom 25th percentile of salaries for this job")
+    median: float | None = Field(default = None, description="Median salary for this job")
+    p75: float | None = Field(default = None, description="Top 75% percentile of salaries for this job")
+
+class SalaryTrendsOut(BaseModel):
+    search: SearchOut
+    points: list[SalaryPointOut]
+
+class DemandPointOut(BaseModel):
