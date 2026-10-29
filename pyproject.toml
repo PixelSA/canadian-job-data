@@ -14,6 +14,7 @@ dependencies = [
 [project.optional-dependencies]
 postgres = ["psycopg[binary]>=3.2"]
 dev = ["pytest>=8"]
+api = ["fastapi>=0.115", "uvicorn[standard]>=0.30"]
 
 [tool.setuptools.packages.find]
 include = ["pipeline*"]
