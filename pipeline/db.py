@@ -45,7 +45,7 @@ class RawPosting(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     source: Mapped[str] = mapped_column(String(32), index=True)
-    source_id: Mapped[str] = mapped_column(String(128))
+    source_id: Mapped[str] = mapped_column(Text)  # JSearch IDs run to ~350 chars
     payload_hash: Mapped[str] = mapped_column(String(64))
     payload: Mapped[dict] = mapped_column(JSON)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
@@ -58,19 +58,21 @@ class Posting(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     source: Mapped[str] = mapped_column(String(32))
-    source_id: Mapped[str] = mapped_column(String(128))
+    source_id: Mapped[str] = mapped_column(Text)
     # Same job seen via two sources shares a fingerprint; aggregates count fingerprints, not rows.
     fingerprint: Mapped[str] = mapped_column(String(64), index=True)
 
-    title: Mapped[str] = mapped_column(String(300))
-    company: Mapped[str | None] = mapped_column(String(200), index=True)
-    location: Mapped[str | None] = mapped_column(String(200))
+    # Text, not String(n): values from external APIs have no length guarantee, and Postgres
+    # (unlike SQLite) rejects anything over n.
+    title: Mapped[str] = mapped_column(Text)
+    company: Mapped[str | None] = mapped_column(Text, index=True)
+    location: Mapped[str | None] = mapped_column(Text)
     # Canadian NOC 2021 occupation code (Job Bank); groups "BI analyst", "data analyst", ...
     occupation_code: Mapped[str | None] = mapped_column(String(10), index=True)
     vacancies: Mapped[int | None] = mapped_column(Integer)
     description: Mapped[str] = mapped_column(Text, default="")
     description_is_full: Mapped[bool] = mapped_column(default=True)
-    url: Mapped[str | None] = mapped_column(String(1000))
+    url: Mapped[str | None] = mapped_column(Text)
     salary_min: Mapped[float | None] = mapped_column(Float)
     salary_max: Mapped[float | None] = mapped_column(Float)
     salary_is_estimate: Mapped[bool] = mapped_column(default=False)
