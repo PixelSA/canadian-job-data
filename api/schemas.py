@@ -37,3 +37,15 @@ class SalaryTrendsOut(BaseModel):
     points: list[SalaryPointOut]
 
 class DemandPointOut(BaseModel):
+    month: date
+    new_postings: int
+    vacancies: int
+    salary_sample_size: int
+    p25: float | None = None
+    median: float | None = None
+    p75: float | None = None
+    note: str | None = None
+
+class DemandTrendsOut(BaseModel):
+    search: SearchOut
+    points: list[DemandPointOut]
