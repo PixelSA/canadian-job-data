@@ -3,7 +3,7 @@
     python -m pipeline.run                     # live sources configured in .env
     python -m pipeline.run --fixtures          # offline, using tests/fixtures
     python -m pipeline.run --fixtures --day 2026-10-20
-    python -m pipeline.run --budgets           # show quota usage for JSearch/Jooble/Adzuna
+    python -m pipeline.run --budgets           # show quota usage for JSearch/Jooble/Adzuna/Jobven
     python -m pipeline.run --rematch           # after editing TRACKED_SEARCHES; no API calls
 """
 
@@ -27,6 +27,7 @@ from pipeline.sources import (
     AdzunaSource,
     AshbySource,
     GreenhouseSource,
+    JobvenSource,
     JoobleSource,
     JSearchSource,
     LeverSource,
@@ -34,6 +35,7 @@ from pipeline.sources import (
     Source,
 )
 from pipeline.sources.base import default_client
+from pipeline.sources.jobven import last_listed_at
 
 log = logging.getLogger("pipeline")
 
@@ -99,6 +101,8 @@ def fixture_transport(fixtures_dir: Path = FIXTURES_DIR) -> httpx.MockTransport:
         if host in ("api.openwebninja.com", "jsearch.p.rapidapi.com"):
             role = params.get("query", "").split(" in ")[0]
             return load(f"jsearch_{_slug(role)}.json", {"status": "OK", "data": []})
+        if host == "api.jobven.com":
+            return load("jobven_jobs.json", {"data": [], "meta": {"hasMore": False}})
         if host == "jooble.org":
             role = json.loads(request.content).get("keywords", "")
             return load(f"jooble_{_slug(role)}.json", {"totalCount": 0, "jobs": []})
@@ -127,6 +131,8 @@ def make_budgets(session_factory) -> dict[str, RequestBudget]:
                                 max_per_run=s.jooble_max_per_run),
         "adzuna": RequestBudget(session_factory, "adzuna", s.adzuna_lifetime_limit, "lifetime",
                                 max_per_run=s.adzuna_max_per_run),
+        "jobven": RequestBudget(session_factory, "jobven", s.jobven_monthly_limit, "month",
+                                max_per_run=s.jobven_max_per_run, unit="records"),
     }
 
 
@@ -138,6 +144,7 @@ def build_sources(
         return [
             JSearchSource(client, "fixture", searches, budgets["jsearch"]),
             JoobleSource(client, "fixture", searches, budgets["jooble"]),
+            JobvenSource(client, "fixture", searches, budgets["jobven"]),
             AdzunaSource(client, "fixture", "fixture", searches, page_delay=0,
                          budget=budgets["adzuna"]),
             GreenhouseSource(client, ["examplecorp"]),
@@ -154,6 +161,10 @@ def build_sources(
                                      s.jsearch_provider, s.jsearch_country, s.jsearch_date_posted))
     if s.jooble_api_key:
         sources.append(JoobleSource(client, s.jooble_api_key, searches, budgets["jooble"]))
+    if s.jobven_api_key:
+        sources.append(JobvenSource(client, s.jobven_api_key, searches, budgets["jobven"],
+                                    last_listed_at(session_factory), s.jobven_country,
+                                    s.jobven_lookback_days))
     if s.adzuna_app_id and s.adzuna_app_key:
         sources.append(AdzunaSource(client, s.adzuna_app_id, s.adzuna_app_key, searches,
                                     s.adzuna_country, max_pages=1, budget=budgets["adzuna"]))
@@ -187,7 +198,7 @@ def main() -> None:
 
     if args.budgets:
         for name, b in make_budgets(session_factory).items():
-            print(f"{name:8} {b.used():>4} / {b.limit} used ({b.period_key})")
+            print(f"{name:8} {b.used():>4} / {b.limit} {b.unit} used ({b.period_key})")
         return
     if args.rematch:
         keys = [s.key for s in settings.searches]

@@ -26,6 +26,7 @@ jobs:
     timeout-minutes: 30
     env:
       JSEARCH_API_KEY: ${{ secrets.JSEARCH_API_KEY }}
+      JOBVEN_API_KEY: ${{ secrets.JOBVEN_API_KEY }}    # leave unset to keep Jobven off
       JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}    # leave unset to keep Jooble off
       ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}      # leave unset to keep Adzuna off
       ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
@@ -46,6 +47,7 @@ jobs:
             *) echo "::error title=Bad DATABASE_URL::DATABASE_URL must start with postgresql+psycopg://"; exit 1 ;;
           esac
           [ -n "$JSEARCH_API_KEY" ] || echo "::warning title=JSearch off::Secret JSEARCH_API_KEY is not set; only company job boards will run."
+          [ -n "$JOBVEN_API_KEY" ] || echo "::notice title=Jobven off::Secret JOBVEN_API_KEY is not set; Jobven is skipped."
           [ -n "$TRACKED_SEARCHES" ] || echo "::warning title=Default searches::Variable TRACKED_SEARCHES is not set; using the defaults."
           if [ -z "$GREENHOUSE_BOARDS$LEVER_COMPANIES$ASHBY_BOARDS$SMARTRECRUITERS_COMPANIES" ]; then
             echo "::warning title=No company boards::None of GREENHOUSE_BOARDS, LEVER_COMPANIES, ASHBY_BOARDS, SMARTRECRUITERS_COMPANIES is set."

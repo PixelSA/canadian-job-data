@@ -74,3 +74,17 @@ def test_exhausted_budget_blocks_request_before_sending(factory):
         with pytest.raises(BudgetExhausted):
             get_json(client, "https://api.example.com/x", budget=budget)
     assert sent == []
+
+
+def test_spend_and_refund_in_units(factory):
+    # Per-record billing (Jobven): reserve a page, give back what didn't come.
+    budget = RequestBudget(factory, "jobven", limit=30, max_per_run=25, unit="records")
+    budget.spend(25)
+    budget.refund(22)
+    assert budget.used() == 3 and budget.remaining() == 22
+    with pytest.raises(BudgetExhausted, match="per-run"):
+        budget.spend(23)
+    uncapped = RequestBudget(factory, "jobven", limit=30, unit="records")
+    with pytest.raises(BudgetExhausted, match="limit of 30"):
+        uncapped.spend(28)  # 3 already used + 28 > 30
+    assert uncapped.used() == 3

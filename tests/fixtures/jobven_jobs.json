@@ -1,0 +1,56 @@
+{
+  "data": [
+    {
+      "id": "jv-0001-prairie-energy-da",
+      "title": "Data Analyst",
+      "descriptionPlain": "Prairie Example Energy is hiring a Data Analyst in Calgary.\n\nYou will build reports in Power BI and write SQL against our operations warehouse. Python is an asset.",
+      "summary": "Reporting and analysis for field operations.",
+      "locations": [
+        {"addressLocality": "Calgary", "addressRegion": "Alberta", "addressCountry": "CA", "workLocation": "hybrid"}
+      ],
+      "remoteType": "hybrid",
+      "skills": {"primary_skills": ["SQL", "Power BI"], "secondary_skills": ["Python"], "soft_skills": ["Communication"]},
+      "salary": {"min": 75000, "max": 90000, "currency": "CAD", "period": "annual", "annualMin": 75000, "annualMax": 90000},
+      "employmentType": "full_time",
+      "postedAt": 1793318400,
+      "listedAt": 1793320000,
+      "closedAt": null,
+      "applyUrl": "https://careers.example-prairie-energy.ca/jobs/1001",
+      "status": "active",
+      "companies": [{"id": 9001, "name": "Prairie Example Energy", "website": "example-prairie-energy.ca"}]
+    },
+    {
+      "id": "jv-0002-northwind-dev",
+      "title": "Software Developer",
+      "descriptionPlain": "Build internal tools in C# and Azure. Offices in Seattle and Edmonton.",
+      "locations": [
+        {"addressLocality": "Seattle", "addressRegion": "Washington", "addressCountry": "US", "workLocation": "onsite"},
+        {"addressLocality": "Edmonton", "addressRegion": "Alberta", "addressCountry": "CA", "workLocation": "onsite"}
+      ],
+      "remoteType": "onsite",
+      "salary": {"min": 110000, "max": 140000, "currency": "USD", "period": "annual", "annualMin": 110000, "annualMax": 140000},
+      "postedAt": 1793232000,
+      "listedAt": 1793320100,
+      "closedAt": null,
+      "applyUrl": "https://jobs.example-northwind.com/2002",
+      "status": "active",
+      "companies": [{"id": 9002, "name": "Example Northwind Systems", "website": "example-northwind.com"}]
+    },
+    {
+      "id": "jv-0003-reddeer-junior-da",
+      "title": "Junior Data Analyst",
+      "descriptionPlain": "Entry-level analyst role. Advanced Excel required.",
+      "locations": [
+        {"addressLocality": "Red Deer", "addressRegion": "Alberta", "addressCountry": "CA", "workLocation": "onsite"}
+      ],
+      "salary": {"min": 30, "max": 34, "currency": "CAD", "period": "hourly"},
+      "postedAt": null,
+      "listedAt": 1793320200,
+      "closedAt": null,
+      "applyUrl": "https://example-reddeer-coop.ca/careers/77",
+      "status": "active",
+      "companies": [{"id": 9003, "name": "Example Red Deer Co-op", "website": "example-reddeer-coop.ca"}]
+    }
+  ],
+  "meta": {"count": 3, "nextCursor": null, "hasMore": false, "requestTimeMs": 12, "lastUpdatedAt": "2026-10-28T12:00:00Z"}
+}

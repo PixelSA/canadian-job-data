@@ -75,6 +75,12 @@ class Settings:
     adzuna_country: str = _env("ADZUNA_COUNTRY", "ca")
     adzuna_lifetime_limit: int = _int("ADZUNA_LIFETIME_LIMIT", 25)
     adzuna_max_per_run: int = _int("ADZUNA_MAX_PER_RUN", 2)
+    # Jobven: billed per job *record* returned (free plan: 300/month), not per request.
+    jobven_api_key: str | None = _env("JOBVEN_API_KEY")
+    jobven_monthly_limit: int = _int("JOBVEN_MONTHLY_LIMIT", 300)
+    jobven_max_per_run: int = _int("JOBVEN_MAX_PER_RUN", 10)  # ~300/month at one run a day
+    jobven_country: str = _env("JOBVEN_COUNTRY", "ca")
+    jobven_lookback_days: int = _int("JOBVEN_LOOKBACK_DAYS", 7)  # first sync only
 
     # --- Unlimited public company job boards ---
     greenhouse_boards: list[str] = field(default_factory=lambda: _list("GREENHOUSE_BOARDS"))

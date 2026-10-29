@@ -126,8 +126,9 @@ def test_all_fixture_sources_together(all_sources):
         da = skill_stats(s, DA)
         # ExampleCorp's Data Analyst now arrives via Adzuna, Greenhouse *and* JSearch: still 1 job.
         # SQL jobs: ExampleCorp, Chinook, ExampleStartup, Bow River, Co-op (Jooble),
-        # ExampleRetail (SmartRecruiters) = 6. Lakeshore (Toronto) isn't in the Alberta search.
-        assert da["SQL"] == 6
+        # ExampleRetail (SmartRecruiters), Prairie Example Energy (Jobven) = 7.
+        # Lakeshore (Toronto) isn't in the Alberta search.
+        assert da["SQL"] == 7
         assert da["Azure Data Factory"] == 1  # from JSearch highlights
         assert da["Looker"] == 3  # Lethbridge (Adzuna), ExampleStartup, ExampleHealth (Ashby)
 
@@ -193,3 +194,16 @@ def test_rematch_replaces_existing_links(tmp_path):
         rematch_all(s, list(reversed(wide)))  # keeps one link, adds one
         rematch_all(s, SEARCHES)  # drops one
         assert {x.search_key for x in s.scalar(select(Posting)).searches} == {DA}
+
+
+def test_jobven_sync_resumes_from_stored_listings(all_sources):
+    from pipeline.sources.jobven import last_listed_at
+
+    factory, sources = all_sources
+    assert last_listed_at(factory) is None  # nothing stored: first sync uses the lookback
+    run_pipeline(factory, [s for s in sources if s.name == "jobven"], SEARCHES, today=DAY1)
+    assert last_listed_at(factory) == 1793320200  # newest listedAt in the fixture
+
+    with factory() as s:
+        coop = s.scalar(select(Posting).where(Posting.source_id == "jv-0003-reddeer-junior-da"))
+        assert {x.search_key for x in coop.searches} == {DA}  # assigned by title + region
