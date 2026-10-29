@@ -189,3 +189,17 @@ def test_jobven_prefers_the_tracked_region_site(budget):
         {"addressLocality": "Calgary", "addressRegion": "Alberta", "addressCountry": "CA"}]}
     rec = JobvenSource(None, "k", SEARCHES, budget, listed_after=1)._to_record(job)
     assert rec.location == "Calgary, Alberta"
+
+
+def test_jobven_query_override_and_page_delay(tmp_path, monkeypatch):
+    from pipeline.sources import JobvenSource
+
+    sleeps = []
+    monkeypatch.setattr("pipeline.sources.jobven.time.sleep", sleeps.append)
+    budget = RequestBudget(make_session_factory(f"sqlite:///{tmp_path / 'j.db'}"), "jobven", 300)
+    seen = []
+    with httpx.Client(transport=_jobven_pages([["a", "b"], ["c"]], seen)) as c:
+        list(JobvenSource(c, "k", SEARCHES, budget, listed_after=1, page_size=2,
+                          query="analyst OR engineer", page_delay=1.5).fetch())
+    assert seen[0]["q"] == "analyst OR engineer" and seen[0]["state"] == "alberta"
+    assert sleeps == [1.5]  # between pages, not before the first

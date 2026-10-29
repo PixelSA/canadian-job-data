@@ -7,9 +7,18 @@ tracked role ("data analyst" OR "software developer" ...) in the tracked provinc
 syncs incrementally: oldest-listed first from just before the newest listing we already
 hold, so a run capped at a few records picks up where the last one stopped instead of
 skipping jobs. Title/region matching in ingest assigns each job to its searches.
+
+One-off backfill with a wider query (e.g. the free plan's 2,500-record first week):
+
+    python -m pipeline.sources.jobven --query "analyst OR developer OR engineer" --max 1000
+
+Postings whose titles match no tracked search are stored but don't affect stats, so a
+later --rematch can fill a newly tracked role from them without API calls.
 """
 
+import argparse
 import logging
+import time
 from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
 
@@ -57,6 +66,8 @@ class JobvenSource:
         country: str = "ca",
         lookback_days: int = 7,
         page_size: int = 25,  # free plan maximum
+        query: str | None = None,  # title search; default: the tracked roles
+        page_delay: float = 0,  # seconds between pages (the free plan rate-limits bursts)
         clock=lambda: datetime.now(timezone.utc),
     ):
         self.client = client
@@ -70,11 +81,13 @@ class JobvenSource:
             listed_after -= int(SYNC_OVERLAP.total_seconds())
         self.listed_after = listed_after
         self.page_size = page_size
+        self.query = query
+        self.page_delay = page_delay
 
     def params(self) -> dict:
         roles = sorted({s.role.lower() for s in self.searches})
         params = {
-            "q": " OR ".join(f'"{r}"' for r in roles),
+            "q": self.query or " OR ".join(f'"{r}"' for r in roles),
             "country": self.country,
             "listedAfter": self.listed_after,
             "sortBy": "listedAt",
@@ -98,6 +111,8 @@ class JobvenSource:
             # With nothing left before the first page, reserving 1 raises BudgetExhausted
             # with the reason (monthly limit), which ends up in the run's notes.
             size = max(min(self.page_size, left), 1)
+            if not first:
+                time.sleep(self.page_delay)
             first = False
             self.budget.spend(size)
             try:
@@ -105,7 +120,7 @@ class JobvenSource:
                     self.client, "GET", self.URL,
                     params={**params, "limit": size, **({"cursor": cursor} if cursor else {})},
                     headers=self.headers,
-                    attempts=2,
+                    attempts=4,  # failed requests (incl. 429s) aren't billed, so retry freely
                 )
             except Exception:
                 self.budget.refund(size)  # failed requests aren't billed
@@ -158,3 +173,42 @@ class JobvenSource:
             # versioned extractor so every source is measured the same way.
             raw=job,
         )
+
+
+def main() -> None:
+    from pipeline.config import settings
+    from pipeline.db import IngestionRun, make_session_factory
+    from pipeline.run import run_pipeline
+    from pipeline.sources.base import default_client
+
+    parser = argparse.ArgumentParser(description="One-off Jobven backfill with a custom query")
+    parser.add_argument("--query", required=True, help='Jobven title search, e.g. "analyst OR engineer"')
+    parser.add_argument("--max", type=int, required=True, help="most records to spend")
+    parser.add_argument("--days", type=int, default=3650, help="only listings from the last N days")
+    args = parser.parse_args()
+    if not settings.jobven_api_key:
+        raise SystemExit("JOBVEN_API_KEY is not set")
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    factory = make_session_factory(settings.database_url)
+    # Counted in api_usage like daily runs, but allowed past the monthly limit by --max:
+    # the free plan's first week allows more than the monthly 300.
+    probe = RequestBudget(factory, JobvenSource.name, settings.jobven_monthly_limit)
+    budget = RequestBudget(factory, JobvenSource.name, probe.used() + args.max, "month",
+                           max_per_run=args.max, unit="records")
+    with default_client() as client:
+        source = JobvenSource(client, settings.jobven_api_key, settings.searches, budget,
+                              country=settings.jobven_country, lookback_days=args.days,
+                              query=args.query, page_delay=1.5)
+        run = run_pipeline(factory, [source], settings.searches)
+    with factory() as s:  # mark the run, so a jump in that day's counts can be explained
+        stored = s.get(IngestionRun, run.id)
+        stored.notes = [*stored.notes, f"jobven backfill: q={args.query!r}, max={args.max}"]
+        s.commit()
+    print(f"run {run.id}: {run.status} fetched={run.fetched} new={run.new_postings} "
+          f"errors={run.errors} | jobven {budget.used()} records used this month")
+
+
+if __name__ == "__main__":
+    main()
