@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import date
 
 
@@ -49,3 +49,22 @@ class DemandPointOut(BaseModel):
 class DemandTrendsOut(BaseModel):
     search: SearchOut
     points: list[DemandPointOut]
+
+
+class PostingOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    title: str
+    company: str | None
+    location: str | None
+    url: str | None
+    salary_min: float | None
+    salary_max: float | None
+    source: str
+    first_seen: date
+
+class PostingsPage(BaseModel):
+    search: SearchOut
+    total: int
+    limit: int
+    offset: int
+    postings: list[PostingOut]
