@@ -53,7 +53,8 @@ class Settings:
     searches: list[TrackedSearch] = field(
         default_factory=lambda: _parse_searches(
             _env("TRACKED_SEARCHES",
-                 "data analyst@Alberta;software developer@Alberta;software engineer@Alberta")
+                 "data analyst@Alberta;software developer@Alberta;software engineer@Alberta;"
+                 "data analyst@Canada;software developer@Canada")
         )
     )
 
@@ -62,7 +63,7 @@ class Settings:
     jsearch_api_key: str | None = _env("JSEARCH_API_KEY")
     jsearch_provider: str = _env("JSEARCH_PROVIDER", "openwebninja")  # or "rapidapi"
     jsearch_monthly_limit: int = _int("JSEARCH_MONTHLY_LIMIT", 200)
-    jsearch_max_per_run: int = _int("JSEARCH_MAX_PER_RUN", 4)
+    jsearch_max_per_run: int = _int("JSEARCH_MAX_PER_RUN", 5)  # one per tracked search
     jsearch_country: str = _env("JSEARCH_COUNTRY", "ca")
     jsearch_date_posted: str = _env("JSEARCH_DATE_POSTED", "3days")
     # Jooble: 500 requests for the key's lifetime.

@@ -4,6 +4,7 @@ import hashlib
 import html
 import json
 import re
+import unicodedata
 
 from pipeline.config import TrackedSearch
 
@@ -22,6 +23,28 @@ REGION_ALIASES: dict[str, set[str]] = {
     "ontario": {"ontario", "on", "toronto", "ottawa", "waterloo", "mississauga",
                 "hamilton", "london", "markham", "kitchener"},
     "canada": {"canada"},
+}
+
+# "Canada" needs more than the word itself: most locations read "Toronto, ON" or
+# "Montréal, Québec". Province codes count only as a whole comma-separated part
+# ("Toronto, ON"), so "on" inside other text doesn't; US places are rejected.
+CA_PROVINCES = {
+    "alberta": "ab", "british columbia": "bc", "manitoba": "mb", "new brunswick": "nb",
+    "newfoundland and labrador": "nl", "newfoundland": "nl", "nova scotia": "ns",
+    "ontario": "on", "prince edward island": "pe", "quebec": "qc", "saskatchewan": "sk",
+    "yukon": "yt", "northwest territories": "nt", "nunavut": "nu",
+}
+CA_CITIES = {
+    "toronto", "montreal", "vancouver", "calgary", "edmonton", "ottawa", "winnipeg",
+    "quebec city", "halifax", "saskatoon", "regina", "mississauga", "brampton", "waterloo",
+    "kitchener", "burnaby", "kelowna", "red deer", "lethbridge", "fredericton", "moncton",
+    "st. john's", "charlottetown", "whitehorse", "yellowknife", "iqaluit", "gatineau",
+}  # no London, Victoria, Richmond or Hamilton: each is also a US/UK place
+US_PLACES = {
+    "al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga", "hi", "id", "il", "in",
+    "ia", "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh",
+    "nj", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut",
+    "vt", "va", "wa", "wv", "wi", "wy", "us", "usa", "united states", "united states of america",
 }
 
 
@@ -65,7 +88,28 @@ def payload_hash(payload: dict) -> str:
     return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
 
 
+def _fold(text: str) -> str:
+    """Lowercase, drop accents ("Montréal" -> "montreal"), keep only words: unlike _norm,
+    text in brackets is kept, as in Ashby's "Remote (Canada)"."""
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
+    return " ".join(re.sub(r"[^a-z0-9.']+", " ", text).split())
+
+
+def location_in_canada(location: str | None) -> bool:
+    if not location:
+        return False
+    words = f" {_fold(location)} "
+    parts = [_fold(p) for p in location.split(",") if p.strip()]
+    if " canada " in words or any(p in CA_PROVINCES.values() for p in parts):
+        return True
+    if parts and parts[-1] in US_PLACES:  # "Ontario, CA" is in California
+        return False
+    return any(f" {name} " in words for name in [*CA_PROVINCES, *CA_CITIES])
+
+
 def location_in_region(location: str | None, region: str) -> bool:
+    if region.lower() == "canada":
+        return location_in_canada(location)
     loc = f" {_norm(location)} "
     names = REGION_ALIASES.get(region.lower(), {region.lower()})
     return any(f" {_norm(n)} " in loc for n in names)

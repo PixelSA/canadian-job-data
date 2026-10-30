@@ -57,3 +57,21 @@ def test_clean_display_name(raw, expected):
     from pipeline.normalize import clean_display_name
     assert clean_display_name(raw) == expected
 
+
+@pytest.mark.parametrize("location, expected", [
+    ("Toronto, ON", True),               # province code as its own part
+    ("Calgary, AB, CA", True),           # code wins over the trailing "CA"
+    ("Montréal, Québec", True),          # accents folded
+    ("Remote (Canada)", True),           # Ashby: the bracketed text still counts
+    ("St. John's, Newfoundland and Labrador", True),
+    ("Vancouver", True),                 # well-known city alone
+    ("Seattle, WA", False),
+    ("Ontario, CA", False),              # Ontario, California
+    ("London, UK", False),               # no London in the city list
+    ("Remote - work on site", False),    # "on" inside text isn't Ontario
+    ("", False),
+    (None, False),
+])
+def test_location_in_canada(location, expected):
+    from pipeline.normalize import location_in_region
+    assert location_in_region(location, "Canada") is expected

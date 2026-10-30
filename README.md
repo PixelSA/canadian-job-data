@@ -55,10 +55,13 @@ python -m pipeline.run              # daily sources
 python -m pipeline.run --budgets    # how much quota is left
 python -m pipeline.jobbank --latest 45   # backfill all Job Bank history (~3 GB download, one-off)
 python -m pipeline.run --rematch    # after editing TRACKED_SEARCHES: reclassify, no API calls
+python -m pipeline.jobbank --latest 45 --reload   # then give new searches Job Bank history
 ```
 
 A posting counts toward a search only if its **title** contains the role's words and its location
-is in the region. The aggregators' own matching is too loose for stats: on the first live run,
+is in the region. A `Canada` search matches any province or territory (by name, code such as
+`Toronto, ON`, or major city) and rejects US places; Jobven's daily query stays on the tracked
+provinces, since its free plan can't cover the whole country. The aggregators' own matching is too loose for stats: on the first live run,
 JSearch's "data analyst" results included "Climate Analyst" and "Supply Chain Analyst".
 
 By default the Job Bank loader keeps only rows matching a tracked role in a tracked region

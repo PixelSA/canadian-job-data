@@ -14,6 +14,7 @@ One CSV per month, back to 2023. Format quirks handled here:
 
     python -m pipeline.jobbank                    # load the newest month not loaded yet
     python -m pipeline.jobbank --latest 12        # backfill up to 12 months
+    python -m pipeline.jobbank --latest 45 --reload   # reprocess history for new searches
     python -m pipeline.jobbank --file tests/fixtures/jobbank_sample.csv --month 2026-09
 """
 
@@ -134,8 +135,7 @@ def row_to_record(row: dict, searches: list[TrackedSearch],
     if not title or not province or not seen:
         return None
     location = f"{city}, {province}" if city else province
-    relevant = [s for s in searches if location_in_region(location, s.region)
-                or s.region.lower() == "canada"]
+    relevant = [s for s in searches if location_in_region(location, s.region)]
     if not all_roles:
         relevant = [s for s in relevant if title_matches_role(title, s.role)]
     if not relevant:
@@ -215,6 +215,8 @@ def load_file(session_factory, path: Path, name: str, month: date,
         extract_pending(session, get_extractor())  # titles only; still catches "SQL developer"
         aggregate_month(session, month, [s.key for s in searches])
         if ok:
+            # A --reload replaces the earlier record of the same file
+            session.query(LoadedFile).filter_by(source=SOURCE, name=name).delete()
             session.add(LoadedFile(source=SOURCE, name=name, url=url, rows_loaded=run.fetched))
         run.status = "success" if ok else "failed"
         run.finished_at = datetime.now().astimezone()
@@ -232,9 +234,11 @@ def download(client: httpx.Client, url: str, dest: Path) -> None:
 
 
 def load_latest(session_factory, client: httpx.Client, searches: list[TrackedSearch],
-                latest: int = 1, all_roles: bool = False) -> list[IngestionRun]:
+                latest: int = 1, all_roles: bool = False,
+                reload: bool = False) -> list[IngestionRun]:
     with session_factory() as s:
-        done = set(s.scalars(select(LoadedFile.name).where(LoadedFile.source == SOURCE)))
+        done = set() if reload else set(
+            s.scalars(select(LoadedFile.name).where(LoadedFile.source == SOURCE)))
     todo = [f for f in list_files(client)[:latest] if f.name not in done]
     if not todo:
         log.info("Job Bank: nothing new to load")
@@ -257,6 +261,9 @@ def main() -> None:
     parser.add_argument("--month", help="YYYY-MM of --file")
     parser.add_argument("--all-roles", action="store_true",
                         help="keep every posting in tracked regions, not just tracked roles")
+    parser.add_argument("--reload", action="store_true",
+                        help="reprocess months already loaded, e.g. after adding a tracked "
+                             "search (Canada) whose rows earlier loads skipped")
     parser.add_argument("--db", default=settings.database_url)
     args = parser.parse_args()
 
@@ -270,7 +277,8 @@ def main() -> None:
                           all_roles=args.all_roles)]
     else:
         with default_client() as client:
-            runs = load_latest(factory, client, settings.searches, args.latest, args.all_roles)
+            runs = load_latest(factory, client, settings.searches, args.latest, args.all_roles,
+                               args.reload)
     for run in runs:
         print(f"run {run.id}: {run.status} | kept={run.fetched} new={run.new_postings}")
     if any(r.status == "failed" for r in runs):

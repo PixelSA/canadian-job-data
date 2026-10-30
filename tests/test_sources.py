@@ -203,3 +203,11 @@ def test_jobven_query_override_and_page_delay(tmp_path, monkeypatch):
                           query="analyst OR engineer", page_delay=1.5).fetch())
     assert seen[0]["q"] == "analyst OR engineer" and seen[0]["state"] == "alberta"
     assert sleeps == [1.5]  # between pages, not before the first
+
+
+def test_jobven_canada_search_keeps_the_province_filter(budget):
+    from pipeline.sources import JobvenSource
+
+    searches = [*SEARCHES, TrackedSearch("data analyst", "Canada")]
+    params = JobvenSource(None, "k", searches, budget, listed_after=1).params()
+    assert params["state"] == "alberta"  # 10 records/day can't cover the whole country

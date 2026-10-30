@@ -94,10 +94,12 @@ class JobvenSource:
             "order": "ASC",
             "descriptionFormat": "plain",
         }
-        # Provinces narrow the query; a Canada-wide search (or an unknown region) can't.
-        regions = {s.region.lower() for s in self.searches}
-        if regions <= REGION_ALIASES.keys() - {"canada"}:
-            params["state"] = ",".join(sorted(regions))
+        # Narrow to the tracked provinces. Canada-wide searches don't widen it: the free
+        # plan's ~10 records/day can't cover the country, so they get Jobven postings from
+        # these provinces (plus JSearch and the company boards) instead.
+        provinces = {s.region.lower() for s in self.searches} - {"canada"}
+        if provinces and provinces <= REGION_ALIASES.keys():
+            params["state"] = ",".join(sorted(provinces))
         return params
 
     def fetch(self) -> Iterator[JobRecord]:
@@ -142,8 +144,12 @@ class JobvenSource:
         sites = [(", ".join(p for p in (l.get("addressLocality"), l.get("addressRegion")) if p),
                   l.get("addressCountry")) for l in job.get("locations") or []]
         regions = {s.region for s in self.searches}
-        location = next((name for name, _ in sites
-                         if any(location_in_region(name, r) for r in regions)), None)             or next((name for name, country in sites if country == "CA"), None)             or (sites[0][0] if sites else None)
+        location = (
+            next((name for name, _ in sites
+                  if any(location_in_region(name, r) for r in regions)), None)
+            or next((name for name, country in sites if country == "CA"), None)
+            or (sites[0][0] if sites else None)
+        )
 
         salary = job.get("salary") or {}
         # Only CAD pay is comparable with the rest of our Canadian salary stats.

@@ -146,3 +146,36 @@ def test_mid_2024_export_without_id_column(factory, tmp_path):
     with factory() as s:
         ids = [p.source_id for p in s.scalars(select(Posting))]
         assert len(ids) == 2 and all(i.startswith("h:") for i in ids)  # stable across reloads
+
+
+def test_canada_search_keeps_rows_from_every_province(factory):
+    canada = [*SEARCHES, TrackedSearch("data analyst", "Canada")]
+    load_file(factory, FIXTURE, "sept", SEPT, canada)
+    with factory() as s:
+        toronto = s.scalar(select(Posting).where(Posting.source_id == "90000003"))
+        assert {x.search_key for x in toronto.searches} == {"data analyst|canada"}
+        stat = s.scalar(select(MonthlyDemandStat).where(
+            MonthlyDemandStat.search_key == "data analyst|canada"))
+        assert stat.new_postings == 3  # Calgary, Alberta (no city) and Toronto
+
+
+def test_reload_reprocesses_loaded_months_for_new_searches(factory):
+    package = {"result": {"resources": [
+        {"name": "September 2026 Job Postings Advertised on Canada's National Job Bank Website",
+         "format": "CSV", "language": ["en"], "url": "https://files.example/sept-en.csv"},
+    ]}}
+
+    def handler(request):
+        if "package_show" in str(request.url):
+            return httpx.Response(200, json=package)
+        return httpx.Response(200, content=FIXTURE.read_bytes())
+
+    canada = [*SEARCHES, TrackedSearch("data analyst", "Canada")]
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        load_latest(factory, client, SEARCHES)
+        assert load_latest(factory, client, canada) == []  # already loaded: skipped
+        [run] = load_latest(factory, client, canada, reload=True)
+    assert run.status == "success"
+    with factory() as s:
+        assert s.scalar(select(Posting).where(Posting.source_id == "90000003")) is not None
+        assert len(s.scalars(select(LoadedFile)).all()) == 1  # replaced, not duplicated
