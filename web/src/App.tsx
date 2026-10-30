@@ -1,9 +1,10 @@
 import { useState } from "react";
 import SearchPicker from "./components/SearchPicker";
+import TopSkills from "./components/TopSkills";
+import DemandChart from "./components/DemandChart";
 import type { SearchOut } from "./api";
 
 export default function App() {
-  // The selected search lives here, because every chart and list will need it.
   const [search, setSearch] = useState<SearchOut | null>(null);
 
   return (
@@ -12,7 +13,10 @@ export default function App() {
       <SearchPicker value={search} onChange={setSearch} />
 
       {search ? (
-        <p>Selected: {search.role} in {search.region}</p>
+        <>
+          <TopSkills search={search} />
+          <DemandChart search={search} />
+        </>
       ) : (
         <p>Pick a role and region to see the market.</p>
       )}

@@ -72,7 +72,7 @@ export type PostingsPage = {
 
 
 export type CompanyOut = { 
-    comapny: string;
+    company: string;
     postings: number;
 };
 
@@ -85,9 +85,11 @@ export type CompaniesOut = {
 
 const BASE = import.meta.env.VITE_API_URL;
 
-async function get<T>(path: string, params: Record<string, string | number> = {}): Promise<T> {
+async function get<T>(path: string, params: Record<string, string | number | undefined> = {}): Promise<T> {
   const url = new URL(path, BASE);
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, String(v)));
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined) url.searchParams.set(k, String(v));   // leave out unset params
+  });
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${res.status} ${path}`);
   return res.json() as Promise<T>;
@@ -98,14 +100,15 @@ export const getSearches = () => get<SearchOut[]>("/searches");
 export const getSkills = (role: string, region: string, limit = 15) =>
   get<SkillTrendsOut>("/trends/skills", { role, region, limit });
 
-export const getSalaries = (role: string, region: string, days: number) => 
+export const getSalaries = (role: string, region: string, days = 30) =>
     get<SalaryTrendsOut>("/trends/salaries", {role, region, days});
 
-export const getDemand = (role: string, region: string, since: number) =>
+// since: first month to include, as "YYYY-MM-DD"; leave it out for the full history
+export const getDemand = (role: string, region: string, since?: string) =>
     get<DemandTrendsOut>("/trends/demand", {role, region, since});
 
-export const getPostings = (role: string, region: string, limit: number, offset: number) =>
-    get<PostingOut>("/postings", {role, region, limit, offset});
+export const getPostings = (role: string, region: string, limit = 20, offset = 0) =>
+    get<PostingsPage>("/postings", {role, region, limit, offset});
 
-export const getCompanies = (role: string, region: string, limit: number) =>
+export const getCompanies = (role: string, region: string, limit = 20) =>
     get<CompaniesOut>("/companies", {role, region, limit});
