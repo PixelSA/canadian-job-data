@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from api.db import get_session
 
-from api.schemas import PostingsPage, SearchOut, PostingOut
+from api.schemas import PostingsPage, SearchOut, PostingOut, CompaniesOut, CompanyOut
 from pipeline.db import PostingSearch, Posting
 from pipeline.aggregate import GRACE_DAYS, SNAPSHOT_SOURCES
 
@@ -41,4 +41,37 @@ def list_postings(
         limit = limit,
         offset = offset,
         postings = [PostingOut.model_validate(row) for row in rows]
+    )
+
+'''
+Returns top companies by number of activer postings for search
+'''
+@router.get("/companies", response_model=CompaniesOut)
+def list_companies(key: SearchKey,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    session: Session = Depends(get_session)): 
+    
+
+    conditions = [
+    PostingSearch.search_key == key,
+    Posting.source.not_in(SNAPSHOT_SOURCES),
+    Posting.last_seen >= date.today() - timedelta(days=GRACE_DAYS),
+    ]
+
+    count = func.count(func.distinct(Posting.fingerprint)).label("postings")
+    rows = session.execute(
+        select(Posting.company, count)
+        .join(PostingSearch)
+        .where(*conditions, Posting.company.is_not(None))
+        .group_by(Posting.company)
+        .order_by(count.desc(), Posting.company)
+        .limit(limit)
+    ).all()
+
+    company_counts = [CompanyOut(company=row.company, postings=row.postings) for row in rows]
+
+    return CompaniesOut(
+        search = SearchOut.from_key(key),
+        companies = company_counts
     )

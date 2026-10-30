@@ -68,3 +68,12 @@ class PostingsPage(BaseModel):
     limit: int
     offset: int
     postings: list[PostingOut]
+
+
+class CompanyOut(BaseModel):
+    company: str
+    postings: int
+
+class CompaniesOut(BaseModel):
+    search: SearchOut
+    companies: list[CompanyOut]
