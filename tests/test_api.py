@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from api.db import get_session
 from api.main import app
 from pipeline.config import TrackedSearch
-from pipeline.db import MonthlyDemandStat, make_session_factory
+from pipeline.db import DailySkillStat, MonthlyDemandStat, make_session_factory
 from pipeline.run import build_sources, fixture_transport, run_pipeline
 
 SEARCHES = [TrackedSearch("data analyst", "Alberta"), TrackedSearch("software developer", "Alberta")]
@@ -17,10 +17,11 @@ DA = {"role": "data analyst", "region": "alberta"}
 @pytest.fixture
 def client(tmp_path):
     factory = make_session_factory(f"sqlite:///{tmp_path / 'api.db'}")
+    today = date.today()  # read once: a run crossing midnight must not compare two dates
     with httpx.Client(transport=fixture_transport()) as http:
         # Seed as of today: /trends/salaries counts back from date.today().
         run_pipeline(factory, build_sources(http, True, SEARCHES, factory), SEARCHES,
-                     today=date.today())
+                     today=today)
     with factory() as s:
         for month, postings in [(date(2025, 12, 1), 40), (date(2026, 1, 1), 50)]:
             s.add(MonthlyDemandStat(month=month, search_key="data analyst|alberta",
@@ -33,7 +34,10 @@ def client(tmp_path):
             yield s
 
     app.dependency_overrides[get_session] = session_override
-    yield TestClient(app)
+    test_client = TestClient(app)
+    test_client.seeded_day = today
+    test_client.factory = factory
+    yield test_client
     app.dependency_overrides.clear()
 
 
@@ -67,7 +71,7 @@ def test_limit_is_validated(client):
 
 def test_salaries_include_today(client):
     points = client.get("/trends/salaries", params=DA).json()["points"]
-    assert points[-1]["day"] == date.today().isoformat() and points[-1]["sample_size"] > 0
+    assert points[-1]["day"] == client.seeded_day.isoformat() and points[-1]["sample_size"] > 0
 
 
 def test_demand_since_mid_month_includes_that_month(client):
@@ -103,3 +107,31 @@ def test_companies_sorted_by_postings_and_limited(client):
     companies = client.get("/companies", params={**DA, "limit": 3}).json()["companies"]
     counts = [c["postings"] for c in companies]
     assert len(companies) == 3 and counts == sorted(counts, reverse=True)
+
+
+def test_skills_without_stats_is_empty_not_404(client):
+    with client.factory() as s:
+        s.query(DailySkillStat).filter_by(search_key="data analyst|alberta").delete()
+        s.commit()
+    body = client.get("/trends/skills", params=DA).json()
+    assert body["day"] is None and body["skills"] == []
+
+
+def test_salaries_are_whole_dollars(client):
+    point = client.get("/trends/salaries", params=DA).json()["points"][-1]
+    assert point["median"] == int(point["median"])
+
+
+def test_cors_allows_the_local_frontend(client):
+    r = client.get("/searches", headers={"Origin": "http://localhost:5173"})
+    assert r.headers["access-control-allow-origin"] == "http://localhost:5173"
+    other = client.get("/searches", headers={"Origin": "https://evil.example"})
+    assert "access-control-allow-origin" not in other.headers
+
+
+def test_data_endpoints_are_cacheable_but_health_and_errors_are_not(client):
+    assert client.get("/searches").headers["cache-control"] == "public, max-age=3600"
+    assert "cache-control" not in client.get("/health").headers
+    missing = client.get("/trends/skills", params={"role": "astronaut", "region": "alberta"})
+    assert missing.status_code == 404 and "cache-control" not in missing.headers
+

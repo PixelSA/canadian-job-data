@@ -21,7 +21,7 @@ class SkillOut(BaseModel):
 
 class SkillTrendsOut(BaseModel):
     search: SearchOut # The search (role and region that form key)
-    day: date # Current day for these numbers
+    day: date | None # Current day for these numbers; null when the search has no daily stats yet
     skills: list[SkillOut] # Nested list of skill info, ordered most-mentioned first
 
 

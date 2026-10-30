@@ -1,5 +1,5 @@
 from api.deps import SearchKey
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
@@ -16,18 +16,20 @@ SERIES_BREAKS = {
 
 router = APIRouter(tags=["trends"])
 
+
+def money(value: float | None) -> float | None:
+    # Whole dollars: percentiles come out of the aggregation as e.g. 94575.26000000001
+    return None if value is None else float(round(value))
+
+
 @router.get("/trends/skills", response_model=SkillTrendsOut)
-def top_skills(key: SearchKey, session = Depends(get_session), limit: int = Query(20, ge = 1, le = 100)):
+def top_skills(key: SearchKey, session: Session = Depends(get_session), limit: int = Query(20, ge = 1, le = 100)):
     # Get the most recent skills related to this job
     # TODO: Find latest day in daily_skill_stats for this key
     latest_day = session.scalar(select(func.max(DailySkillStat.day)).where(DailySkillStat.search_key == key))
     if latest_day is None:
-        raise HTTPException(
-            status_code=404,
-            detail = {
-                "message": f"No skill data found",
-            },
-        )
+        # The search exists but has no daily stats yet: empty, like salaries and demand
+        return SkillTrendsOut(search=SearchOut.from_key(key), day=None, skills=[])
 
     # TODO: Given the latest day, find that day's top skills
 
@@ -66,14 +68,14 @@ def top_skills(key: SearchKey, session = Depends(get_session), limit: int = Quer
 
 
 @router.get("/trends/salaries", response_model=SalaryTrendsOut)
-def salary_trends(key: SearchKey, days: int = Query(30, ge = 1, le=365), session = Depends(get_session)):
+def salary_trends(key: SearchKey, days: int = Query(30, ge = 1, le=365), session: Session = Depends(get_session)):
     since = date.today() - timedelta(days=days)
     rows = session.scalars(
         select(DailySalaryStat)
         .where(DailySalaryStat.search_key == key, DailySalaryStat.day >= since)
         .order_by(DailySalaryStat.day.asc())).all()
 
-    points = [SalaryPointOut(day = row.day, sample_size = row.sample_size, p25 = row.p25, median = row.median, p75=row.p75) for row in rows]
+    points = [SalaryPointOut(day = row.day, sample_size = row.sample_size, p25 = money(row.p25), median = money(row.median), p75 = money(row.p75)) for row in rows]
 
 
     return SalaryTrendsOut(search=SearchOut.from_key(key), points=points)
@@ -99,9 +101,9 @@ def demand_trends(
                              new_postings= row.new_postings,
                             vacancies = row.vacancies,
                             salary_sample_size= row.salary_sample_size,
-                            p25=row.salary_p25,
-                            median=row.salary_median,
-                            p75=row.salary_p75,
+                            p25=money(row.salary_p25),
+                            median=money(row.salary_median),
+                            p75=money(row.salary_p75),
                             note=SERIES_BREAKS.get(row.month)) for row in rows]
 
     return DemandTrendsOut(search=SearchOut.from_key(key), points=points)
