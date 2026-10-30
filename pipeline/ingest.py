@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session, selectinload
 from pipeline.budget import BudgetExhausted
 from pipeline.config import TrackedSearch
 from pipeline.db import IngestionRun, Posting, PostingSearch, PostingSkill, RawPosting
-from pipeline.normalize import fingerprint, matching_searches, payload_hash, title_matches_role
+from pipeline.normalize import clean_display_name, fingerprint, matching_searches, payload_hash, title_matches_role
 from pipeline.skills import SkillExtractor
 from pipeline.sources import JobRecord, Source
 
@@ -74,7 +74,7 @@ def upsert_posting(
     changed = not created and posting.description != rec.description
     posting.fingerprint = _fingerprint(rec)
     posting.title = rec.title
-    posting.company = rec.company
+    posting.company = clean_display_name(rec.company)
     posting.location = rec.location
     posting.occupation_code = rec.occupation_code
     posting.vacancies = rec.vacancies
@@ -109,6 +109,18 @@ def set_searches(posting: Posting, keys: set[str]) -> None:
     have = {s.search_key for s in posting.searches}
     for key in sorted(keys - have):
         posting.searches.append(PostingSearch(search_key=key))
+
+
+def reclean_companies(session: Session) -> int:
+    """Re-apply clean_display_name to stored company names (for rows ingested before it)."""
+    changed = 0
+    for p in session.scalars(select(Posting).where(Posting.company.is_not(None))):
+        cleaned = clean_display_name(p.company)
+        if cleaned != p.company:
+            p.company = cleaned
+            changed += 1
+    session.commit()
+    return changed
 
 
 def rematch_all(session: Session, searches: list[TrackedSearch]) -> int:

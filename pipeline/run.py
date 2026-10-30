@@ -20,7 +20,7 @@ from pipeline.aggregate import aggregate_day, aggregate_month
 from pipeline.budget import RequestBudget
 from pipeline.config import ROOT, TrackedSearch, settings
 from pipeline.db import IngestionRun, MonthlyDemandStat, make_session_factory
-from pipeline.ingest import extract_pending, ingest_source, rematch_all
+from pipeline.ingest import extract_pending, ingest_source, reclean_companies, rematch_all
 from pipeline.jobbank import refingerprint
 from pipeline.skills import SkillExtractor, get_extractor
 from pipeline.sources import (
@@ -189,8 +189,8 @@ def main() -> None:
     parser.add_argument("--db", default=settings.database_url, help="SQLAlchemy database URL")
     parser.add_argument("--budgets", action="store_true", help="print API quota usage and exit")
     parser.add_argument("--rematch", action="store_true",
-                        help="recompute which searches stored postings belong to, re-aggregate "
-                             "(no API calls), and exit")
+                        help="recompute which searches stored postings belong to, tidy stored "
+                             "company names, re-aggregate (no API calls), and exit")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -204,12 +204,14 @@ def main() -> None:
         keys = [s.key for s in settings.searches]
         with session_factory() as session:
             refingerprint(session)
+            recleaned = reclean_companies(session)
             changed = rematch_all(session, settings.searches)
             aggregate_day(session, args.day or date.today(), keys)
             months = session.scalars(select(MonthlyDemandStat.month).distinct()).all()
             for month in months:
                 aggregate_month(session, month, keys)
-        print(f"rematched {changed} postings; re-aggregated today and {len(months)} months")
+        print(f"rematched {changed} postings, cleaned {recleaned} company names; "
+              f"re-aggregated today and {len(months)} months")
         return
 
     client = (httpx.Client(transport=fixture_transport()) if args.fixtures else default_client())

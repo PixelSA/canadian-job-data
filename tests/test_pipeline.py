@@ -207,3 +207,17 @@ def test_jobven_sync_resumes_from_stored_listings(all_sources):
     with factory() as s:
         coop = s.scalar(select(Posting).where(Posting.source_id == "jv-0003-reddeer-junior-da"))
         assert {x.search_key for x in coop.searches} == {DA}  # assigned by title + region
+
+
+def test_reclean_companies_fixes_rows_stored_before_cleaning(tmp_path):
+    from pipeline.ingest import reclean_companies, upsert_posting
+
+    factory = make_session_factory(f"sqlite:///{tmp_path / 'c.db'}")
+    with factory() as s:
+        upsert_posting(s, _rec("Data Analyst", "Calgary, AB"), DAY1, SEARCHES)
+        s.scalar(select(Posting)).company = "TD "  # as stored before clean_display_name
+        s.commit()
+        assert reclean_companies(s) == 1
+        assert s.scalar(select(Posting)).company == "TD"
+        assert reclean_companies(s) == 0
+

@@ -40,6 +40,16 @@ def _norm(s: str | None) -> str:
     return _WS_RE.sub(" ", _NON_WORD_RE.sub(" ", s)).strip()
 
 
+_QUOTES = "\"'“”‘’`"
+
+
+def clean_display_name(name: str | None) -> str | None:
+    """Tidy a name for display: sources send stray padding ('TD ') and quoting
+    ('"Total Life, Inc."'), which would otherwise split one company into several."""
+    cleaned = _WS_RE.sub(" ", (name or "")).strip().strip(_QUOTES).strip()
+    return cleaned or None
+
+
 def normalize_company(name: str | None) -> str:
     return " ".join(w for w in _norm(name).split() if w not in _COMPANY_SUFFIXES)
 

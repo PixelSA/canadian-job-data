@@ -1,3 +1,5 @@
+import pytest
+
 from pipeline.config import TrackedSearch
 from pipeline.normalize import (
     fingerprint,
@@ -40,3 +42,18 @@ def test_title_matching():
 def test_matching_searches():
     searches = [TrackedSearch("data analyst", "Alberta"), TrackedSearch("data analyst", "Ontario")]
     assert matching_searches("Data Analyst", "Calgary, AB", searches) == ["data analyst|alberta"]
+
+
+@pytest.mark.parametrize("raw, expected", [
+    ('"Total Life, Inc."', "Total Life, Inc."),  # JSearch, quoted
+    ("TD ", "TD"),  # Jobven, trailing space
+    ("“Acme”", "Acme"),
+    ("Farm  Credit	Canada", "Farm Credit Canada"),
+    ("O'Brien Engineering", "O'Brien Engineering"),  # inner apostrophe kept
+    ('  "" ', None),
+    (None, None),
+])
+def test_clean_display_name(raw, expected):
+    from pipeline.normalize import clean_display_name
+    assert clean_display_name(raw) == expected
+
