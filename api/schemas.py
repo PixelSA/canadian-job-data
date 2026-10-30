@@ -27,7 +27,7 @@ class SkillTrendsOut(BaseModel):
 
 class SalaryPointOut(BaseModel):
     day: date
-    sample_size: int = Field("Number of postings for this job")
+    sample_size: int = Field(description="Number of postings for this job")
     p25: float | None = Field(default = None, description="Bottom 25th percentile of salaries for this job")
     median: float | None = Field(default = None, description="Median salary for this job")
     p75: float | None = Field(default = None, description="Top 75% percentile of salaries for this job")
