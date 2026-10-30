@@ -73,3 +73,33 @@ def test_salaries_include_today(client):
 def test_demand_since_mid_month_includes_that_month(client):
     points = client.get("/trends/demand", params={**DA, "since": "2026-01-15"}).json()["points"]
     assert [p["month"] for p in points] == ["2026-01-01"]
+
+
+def _ids(postings):
+    return [(p["source"], p["title"], p["company"]) for p in postings]
+
+
+def test_postings_pages_dont_overlap(client):
+    first = client.get("/postings", params={**DA, "limit": 2}).json()
+    second = client.get("/postings", params={**DA, "limit": 2, "offset": 2}).json()
+    assert len(first["postings"]) == 2 and len(second["postings"]) == 2
+    assert not set(_ids(first["postings"])) & set(_ids(second["postings"]))
+    assert first["total"] == second["total"] > 4
+
+
+def test_postings_offset_past_end_is_empty(client):
+    body = client.get("/postings", params={**DA, "offset": 1000}).json()
+    assert body["postings"] == [] and body["total"] > 0
+
+
+def test_postings_are_live_and_flag_salary_estimates(client):
+    postings = client.get("/postings", params={**DA, "limit": 100}).json()["postings"]
+    assert all(p["source"] != "jobbank" for p in postings)
+    assert "description" not in postings[0]
+    assert any(p["salary_is_estimate"] for p in postings)  # Adzuna's predicted pay
+
+
+def test_companies_sorted_by_postings_and_limited(client):
+    companies = client.get("/companies", params={**DA, "limit": 3}).json()["companies"]
+    counts = [c["postings"] for c in companies]
+    assert len(companies) == 3 and counts == sorted(counts, reverse=True)

@@ -59,6 +59,7 @@ class PostingOut(BaseModel):
     url: str | None
     salary_min: float | None
     salary_max: float | None
+    salary_is_estimate: bool  # Adzuna's predicted pay, not stated by the employer
     source: str
     first_seen: date
 
