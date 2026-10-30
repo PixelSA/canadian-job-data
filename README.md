@@ -43,6 +43,7 @@ re-extracts every stored posting.
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
+pip install -e ".[dev,api]"
 pytest                                   # no network needed
 python -m pipeline.run --fixtures        # daily pipeline on saved sample responses -> jobs.db
 python -m pipeline.jobbank --file tests/fixtures/jobbank_sample.csv --month 2026-09
