@@ -9,9 +9,8 @@ app.include_router(trends.router)
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"name": app.title, "docs": "/docs"}
 
-# Define a route with path and query parameters
 @app.get("/health")
 def read_health():
     return{"status": "ok"}

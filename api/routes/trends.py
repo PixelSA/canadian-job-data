@@ -90,7 +90,8 @@ def demand_trends(
         .order_by(MonthlyDemandStat.month)
     )
     if since is not None:
-        query = query.where(MonthlyDemandStat.month >= since)
+        # Months are stored as the 1st, so a mid-month date still includes its month
+        query = query.where(MonthlyDemandStat.month >= since.replace(day=1))
 
     rows = session.scalars(query).all()
 
