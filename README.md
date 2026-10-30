@@ -68,6 +68,38 @@ loaded are recorded in `loaded_files` and skipped.
 In production `.github/workflows/ingest.yml` runs the daily job and the monthly Job Bank load
 against hosted Postgres (`pip install -e ".[postgres]"`).
 
+## API
+
+A read-only FastAPI app (`api/`) serves the aggregated data to the frontend.
+
+```bash
+pip install -e ".[dev,api]"
+uvicorn api.main:app --reload            # from the project root; docs at http://localhost:8000/docs
+```
+
+Every data endpoint takes `role` and `region` (case and spacing don't matter); an unknown
+search returns 404 with the list of available ones.
+
+| Endpoint | Returns |
+|---|---|
+| `GET /searches` | Tracked role + region searches |
+| `GET /trends/skills?limit=` | Latest day's top skills: active postings, share, change vs. 7 days earlier |
+| `GET /trends/salaries?days=` | Daily salary p25 / median / p75 and sample size |
+| `GET /trends/demand?since=` | Monthly Job Bank postings, vacancies and salaries; the July 2025 series break carries a `note` |
+| `GET /postings?limit=&offset=` | Active postings, newest first, with `total` for paging |
+| `GET /companies?limit=` | Top hiring companies by distinct active jobs |
+| `GET /health` | Liveness check |
+
+Data endpoints send `Cache-Control: public, max-age=3600`, since the data changes once a day.
+
+| Variable | Purpose |
+|---|---|
+| `API_DATABASE_URL` | Read-only connection (role from `sql/api_reader.sql`). Unset falls back to `DATABASE_URL`, for local dev only. |
+| `API_CORS_ORIGINS` | Comma-separated browser origins allowed to call the API (default: `localhost:5173`, `localhost:3000`) |
+
+Deploying (e.g. Render): build `pip install ".[api,postgres]"`, start
+`uvicorn api.main:app --host 0.0.0.0 --port $PORT`, health check `/health`.
+
 ## Known limitations
 
 - Jobven syncs incrementally (oldest-listed first, from the newest listing already stored), capped at `JOBVEN_MAX_PER_RUN` records a day. If Alberta listings for the tracked roles outpace ~10/day, it falls behind rather than skipping jobs. Its own AI-extracted skills are kept in `raw_postings` but not used: stats come from one extractor so every source is measured the same way. Only CAD salaries are used. Its terms forbid redistributing the raw data; check them before listing individual postings publicly.
