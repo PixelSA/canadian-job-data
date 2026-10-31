@@ -2,6 +2,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/space-grotesk";
 import "./index.css";
 
 // One shared cache for the whole app. Created outside any component so it's made once.

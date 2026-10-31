@@ -1,111 +1,481 @@
+/* ------------------------------------------------------------------ tokens
+   Light by default. Dark applies when the OS prefers it (unless the toggle chose
+   light) or when the toggle chose dark. The dark values are their own steps,
+   not an automatic inversion. Chart series colours are validated against these
+   surfaces (dataviz palette slot 1: #2a78d6 light / #3987e5 dark). */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  color-scheme: light;
+  --bg: #f3f2ee;
+  --surface: #fcfcfb;
+  --surface-2: #f0efea;
+  --border: #e2e0d9;
+  --text: #0b0b0b;
+  --text-2: #52514e;
+  --text-3: #75736d;
+  --accent: #2a78d6;
+  --accent-ink: #1d5fae;          /* accent as text: darker for 4.5:1 on the surface */
+  --accent-soft: rgba(42, 120, 214, 0.1);
+  --series-1: #2a78d6;
+  --grid: #e7e5df;
+  --up: #12804f;
+  --down: #c03a39;
+  --warn: #b26b00;
+  --shadow: 0 1px 2px rgba(20, 18, 10, 0.05), 0 4px 16px rgba(20, 18, 10, 0.04);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --bg: #111110;
+    --surface: #1a1a19;
+    --surface-2: #232321;
+    --border: #2f2f2c;
+    --text: #f0efec;
+    --text-2: #c3c2b7;
+    --text-3: #93928a;
+    --accent: #3987e5;
+    --accent-ink: #7fb2f0;
+    --accent-soft: rgba(57, 135, 229, 0.16);
+    --series-1: #3987e5;
+    --grid: #2a2a27;
+    --up: #4cc38a;
+    --down: #f07a78;
+    --warn: #e0a33a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   }
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111110;
+  --surface: #1a1a19;
+  --surface-2: #232321;
+  --border: #2f2f2c;
+  --text: #f0efec;
+  --text-2: #c3c2b7;
+  --text-3: #93928a;
+  --accent: #3987e5;
+  --accent-ink: #7fb2f0;
+  --accent-soft: rgba(57, 135, 229, 0.16);
+  --series-1: #3987e5;
+  --grid: #2a2a27;
+  --up: #4cc38a;
+  --down: #f07a78;
+  --warn: #e0a33a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* ------------------------------------------------------------- typography */
+:root {
+  --font-body: "Inter Variable", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Space Grotesk Variable", "Inter Variable", system-ui, sans-serif;
+  font: 15px/1.55 var(--font-body);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   margin: 0;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+h1, h2 {
+  font-family: var(--font-display);
+  color: var(--text);
+  letter-spacing: -0.02em;
 }
 
 h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.1;
+  font-weight: 700;
   margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
 }
+
+h2 {
+  font-size: 19px;
+  line-height: 1.25;
+  font-weight: 600;
+  margin: 0 0 2px;
+}
+
 p {
+  margin: 0 0 8px;
+}
+
+a {
+  color: var(--accent-ink);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.muted {
+  color: var(--text-2);
+}
+
+/* Small uppercase label above a heading */
+.eyebrow {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  margin: 0 0 6px;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------- layout */
+main {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 16px 56px;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-header .lede {
+  max-width: 34em;
+  font-size: 16px;
+  color: var(--text-2);
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 16px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  min-width: 0; /* lets charts shrink inside grid cells */
+}
+
+.card.wide {
+  grid-row: span 2;
+}
+
+.card.full {
+  grid-column: 1 / -1;
+}
+
+.card-head {
+  margin-bottom: 14px;
+}
+
+.card-head .muted {
+  font-size: 13.5px;
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .card.wide {
+    grid-row: auto;
+  }
+  .card {
+    padding: 16px;
+  }
+}
+
+/* --------------------------------------------------------------- controls */
+.field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+select,
+button {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+select {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 7px 10px;
+  min-width: 220px;
+}
+
+button {
+  font-size: 13.5px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+select:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Theme toggle: a three-way segmented control */
+.theme-toggle {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.theme-toggle button {
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  padding: 4px 10px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.theme-toggle button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+/* ----------------------------------------------------------- top skills */
+.changes {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 4px;
+  font-size: 13.5px;
+}
+
+.changes .up {
+  color: var(--up);
+  font-weight: 600;
+}
+
+.changes .down {
+  color: var(--down);
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------- salary range */
+.salary {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1fr;
+  gap: 8px;
+  margin: 4px 0 12px;
+  text-align: center;
+}
+
+.salary div {
+  padding: 12px 6px;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.salary .median {
+  background: var(--accent-soft);
+}
+
+.salary dt {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.salary dd {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.salary .median dd {
+  font-size: 24px;
+  color: var(--accent-ink);
+}
+
+.footnote {
+  font-size: 12.5px;
+  color: var(--text-3);
+  margin: 0;
+}
+
+.footnote.warn {
+  color: var(--warn);
+}
+
+/* ---------------------------------------------------------- companies */
+.companies {
+  list-style: none;
+  counter-reset: rank;
+  margin: 0;
+  padding: 0;
+}
+
+.companies li {
+  counter-increment: rank;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.companies li:last-child {
+  border-bottom: 0;
+}
+
+.companies li::before {
+  content: counter(rank);
+  width: 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.companies .name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.companies .count {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+}
+
+/* ------------------------------------------------------------ demand */
+.break-note {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+.break-note strong {
+  color: var(--warn);
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------- postings */
+.postings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  transition: opacity 0.15s;
+}
+
+.postings.fetching {
+  opacity: 0.55;
+}
+
+.postings li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.postings .title {
+  font-weight: 600;
+  font-size: 15.5px;
+}
+
+.postings .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 2px;
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+
+.postings .salary-tag {
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.postings .estimate {
+  font-weight: 500;
+  color: var(--warn);
+}
+
+.postings .seen {
+  color: var(--text-3);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+
+/* -------------------------------------------------------------- footer */
+footer {
+  margin-top: 28px;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+
+/* States shown while loading or without data */
+.status {
+  color: var(--text-3);
+  font-size: 14px;
+  margin: 0;
 }
